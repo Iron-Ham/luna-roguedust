@@ -14,10 +14,10 @@
 
 ## Content
 
-- [ ] Five route kinds with real transitions
-- [ ] Full enemy roster and data-driven wave patterns
-- [ ] Five bosses with phases and telegraphs
-- [ ] Temporary boons and ship-specific combat
+- [x] Five route kinds with real transitions
+- [x] Full enemy roster and data-driven wave patterns
+- [x] Five bosses with phases and telegraphs
+- [x] Temporary boons and ship-specific combat
 
 ## Meta
 

@@ -198,6 +198,25 @@ export class CanvasRenderer {
     ctx.closePath();
     ctx.fill();
     ctx.restore();
+    if (player.charging > 0) {
+      ctx.save();
+      ctx.strokeStyle = '#f58dca';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(player.position.x, player.position.y, 30 + player.charging * 18, -Math.PI / 2, -Math.PI / 2 + player.charging / 1.2 * TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
+    if (player.decoy > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(0.6, player.decoy / 2.5);
+      ctx.strokeStyle = '#e8c7ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(player.position.x - Math.cos(player.aim) * 72, player.position.y - Math.sin(player.aim) * 72, 18, 0, TAU);
+      ctx.stroke();
+      ctx.restore();
+    }
     if (player.abilityDuration > 0 && state.ship === 'bulwark') {
       ctx.save();
       ctx.strokeStyle = 'rgba(255, 155, 74, 0.8)';

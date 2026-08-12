@@ -15,6 +15,7 @@ export type Screen =
   | 'market'
   | 'pause'
   | 'report'
+  | 'threat'
   | 'game';
 
 export type RunPhase = 'idle' | 'route' | 'combat' | 'boss' | 'boon' | 'salvage' | 'market' | 'dead' | 'victory' | 'paused';
@@ -107,6 +108,8 @@ export interface InputSnapshot {
   moveY: number;
   aimX: number;
   aimY: number;
+  aimTargetX: number;
+  aimTargetY: number;
   firing: boolean;
   abilityPressed: boolean;
   dashPressed: boolean;

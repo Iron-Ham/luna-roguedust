@@ -168,9 +168,9 @@ function handleIntent(intent: GameIntent): void {
     return;
   }
   if (intent.type === 'select-screen' && intent.screen) {
-    const allowedScreens: Screen[] = ['hangar', 'core', 'shipyard', 'archive', 'settings'];
+    const allowedScreens: Screen[] = ['hangar', 'core', 'shipyard', 'archive', 'settings', 'threat'];
     if (allowedScreens.includes(intent.screen) && (simulation.getPhase() === 'idle' || simulation.getPhase() === 'dead' || simulation.getPhase() === 'victory')) {
-      ui.setScreen(intent.screen);
+      if (intent.screen !== 'threat' || save.threatUnlocked) ui.setScreen(intent.screen);
       input.setActive(false);
     }
     if (intent.screen === 'settings' && simulation.getPhase() === 'paused') ui.setScreen('settings');

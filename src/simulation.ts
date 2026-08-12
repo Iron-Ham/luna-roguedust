@@ -1,5 +1,5 @@
 import { BOONS, getBoss, getEnemy, getSector, getShip, getRoute, ROUTES } from './content';
-import { approach, circleOverlap, moveTowardCircle, normalize, Rng, TAU } from './math';
+import { approach, circleOverlap, moveTowardCircle, normalize, Rng, TAU, wrapAngle } from './math';
 import type {
   BoonId,
   BossId,
@@ -109,6 +109,7 @@ export class GameSimulation {
   private waveElapsed = 0;
   private spawnTimer = 0;
   private fireTimer = 0;
+  private previousFiring = false;
   private droneTimer = 0;
   private score = 0;
   private waveNumber = 0;
@@ -151,7 +152,7 @@ export class GameSimulation {
     this.waveElapsed = 0;
     this.spawnTimer = 0;
     this.fireTimer = 0;
-    this.droneTimer = 0;
+    this.previousFiring = false;
     this.score = 0;
     this.waveNumber = 0;
     this.status = 'SELECT A ROUTE';
@@ -419,16 +420,14 @@ export class GameSimulation {
   private updatePlayer(input: InputSnapshot, dt: number): void {
     const player = this.player;
     const ship = getShip(this.ship);
-    player.aim = Math.atan2(input.aimY, input.aimX);
+    player.aim = input.pointerActive ? Math.atan2(input.aimTargetY - player.position.y, input.aimTargetX - player.position.x) : Math.atan2(input.aimY, input.aimX);
     player.dashCooldown = Math.max(0, player.dashCooldown - dt);
     player.invulnerable = Math.max(0, player.invulnerable - dt);
     player.grace = Math.max(0, player.grace - dt);
     player.abilityCooldown = Math.max(0, player.abilityCooldown - dt);
     player.abilityDuration = Math.max(0, player.abilityDuration - dt);
     player.afterburner = Math.max(0, player.afterburner - dt);
-    player.decoy = Math.max(0, player.decoy - dt);
     player.energy = Math.min(player.maxEnergy, player.energy + dt * 8);
-    if (player.charging > 0) player.charging = Math.min(1.2, player.charging + dt);
 
     const movement = normalize(input.moveX, input.moveY, 0, 0);
     const metaSpeed = 1 + this.save.meta['vector-coils'] * 0.06;
@@ -446,9 +445,20 @@ export class GameSimulation {
     if (input.abilityPressed && player.abilityCooldown <= 0 && player.energy >= 35) this.useAbility();
     const fireCadence = ship.fireRate / (1 + this.save.meta['capacitor-bank'] * 0.08 + (this.hasBoon('overclock') ? 0.18 : 0));
     this.fireTimer -= dt;
-    if (input.firing && this.fireTimer <= 0) {
-      this.fireTimer = fireCadence;
-      this.firePrimary();
+    if (ship.id === 'nova') {
+      if (input.firing) {
+        player.charging = Math.min(1.2, player.charging + dt);
+      } else if (this.previousFiring && player.charging > 0) {
+        this.firePrimary(player.charging);
+        player.charging = 0;
+      }
+      this.previousFiring = input.firing;
+    } else {
+      if (input.firing && this.fireTimer <= 0) {
+        this.fireTimer = fireCadence;
+        this.firePrimary();
+      }
+      this.previousFiring = input.firing;
     }
     this.droneTimer -= dt;
     if (this.hasBoon('drone-pact') && this.droneTimer <= 0) {
@@ -456,7 +466,12 @@ export class GameSimulation {
       const angle = this.elapsed * 2.4;
       this.spawnFriendlyProjectile(player.position.x + Math.cos(angle) * 34, player.position.y + Math.sin(angle) * 34, angle, 14, '#b2ff9b', false);
     }
-    if (player.dashDuration > 0 && this.hasBoon('afterimage')) this.spawnParticle(player.position.x, player.position.y, '#ff6f86', 2.8);
+    if (player.dashDuration > 0 && this.hasBoon('afterimage')) {
+      this.spawnParticle(player.position.x, player.position.y, '#ff6f86', 2.8);
+      for (const enemy of this.enemies) {
+        if (circleOverlap(player.position.x, player.position.y, 48, enemy.x, enemy.y, enemy.radius)) enemy.hull -= 34 * dt;
+      }
+    }
   }
 
   private dash(moveX: number, moveY: number): void {
@@ -504,17 +519,18 @@ export class GameSimulation {
     this.emit({ type: 'message', text: `${ship.abilityName} / ${Math.ceil(player.abilityCooldown * 10) / 10}S COOLDOWN` });
   }
 
-  private firePrimary(): void {
+  private firePrimary(charge = 1): void {
     const ship = getShip(this.ship);
-    const damage = ship.projectileDamage * (this.hasBoon('overclock') ? 0.9 : 1) * (this.player.afterburner > 0 ? 1.35 : 1);
+    const chargedScale = ship.id === 'nova' ? 0.7 + charge * 0.9 : 1;
+    const damage = ship.projectileDamage * chargedScale * (this.hasBoon('overclock') ? 0.9 : 1) * (this.player.afterburner > 0 ? 1.35 : 1);
     const spread = ship.id === 'bulwark' ? [-0.22, 0, 0.22] : ship.id === 'needle' ? [-0.13, 0.13] : [0];
     for (const offset of spread) {
-      this.spawnFriendlyProjectile(this.player.position.x + Math.cos(this.player.aim) * 22, this.player.position.y + Math.sin(this.player.aim) * 22, this.player.aim + offset, damage, ship.color, false);
+      this.spawnFriendlyProjectile(this.player.position.x + Math.cos(this.player.aim) * 22, this.player.position.y + Math.sin(this.player.aim) * 22, this.player.aim + offset, damage, ship.color, ship.id === 'nova');
     }
     if (this.hasBoon('echo-chamber') && this.rng.chance(0.2)) {
       this.spawnFriendlyProjectile(this.player.position.x + Math.cos(this.player.aim) * 22, this.player.position.y + Math.sin(this.player.aim) * 22, this.player.aim, damage, '#f0d36a', false, 0.08);
     }
-    this.emit({ type: 'shot', intensity: 0.6 });
+    this.emit({ type: 'shot', intensity: ship.id === 'nova' ? charge : 0.6 });
   }
 
   private updateDirector(dt: number): void {
@@ -523,7 +539,7 @@ export class GameSimulation {
     const route = this.activeRoute;
     const spawnInterval = route === 'rift' ? 0.7 : route === 'elite' ? 0.82 : 1.1;
     if (this.spawnTimer <= 0 && this.waveElapsed < this.waveDuration()) {
-      const baseCount = route === 'elite' ? 2 : route === 'rift' ? 2 : 1;
+      const baseCount = route === 'elite' ? 1 : route === 'rift' ? 2 : 1;
       const crowded = this.heatIds.includes('crowded') ? 1 : 0;
       for (let i = 0; i < baseCount + crowded; i += 1) this.spawnEnemy(route === 'elite' && this.waveNumber > 3);
       this.waveNumber += 1;
@@ -556,7 +572,7 @@ export class GameSimulation {
     const definition = getEnemy(id);
     const angle = this.rng.next() * TAU;
     const distance = ARENA_RADIUS + 35;
-    const hullMultiplier = 1 + (this.sector - 1) * 0.12 + (elite ? 1.4 : 0);
+    const hullMultiplier = 1 + (this.sector - 1) * 0.12 + (elite ? 1.15 : 0);
     this.enemies.push({
       id,
       x: ARENA_CENTER.x + Math.cos(angle) * distance,
@@ -566,7 +582,7 @@ export class GameSimulation {
       radius: definition.radius + (elite ? 4 : 0),
       hull: definition.hull * hullMultiplier,
       maxHull: definition.hull * hullMultiplier,
-      damage: definition.damage * (elite ? 1.35 : 1),
+      damage: definition.damage * (elite ? 1.15 : 1),
       speed: definition.speed * (1 + (this.heatIds.includes('overclocked') ? 0.18 : 0)),
       angle: angle + Math.PI,
       telegraph: 0,
@@ -587,6 +603,10 @@ export class GameSimulation {
       enemy.telegraph = Math.max(0, enemy.telegraph - dt);
       const toPlayer = normalize(this.player.position.x - enemy.x, this.player.position.y - enemy.y, 0, 0);
       enemy.angle = Math.atan2(toPlayer.y, toPlayer.x);
+      if (this.ship === 'nova' && this.player.abilityDuration > 0) {
+        enemy.x += toPlayer.x * 180 * dt;
+        enemy.y += toPlayer.y * 180 * dt;
+      }
       if (enemy.id === 'mine') {
         enemy.vx = 0;
         enemy.vy = 0;
@@ -675,17 +695,30 @@ export class GameSimulation {
       }
       let hit = false;
       for (const enemy of this.enemies) {
-        if (circleOverlap(projectile.x, projectile.y, projectile.radius, enemy.x, enemy.y, enemy.radius)) {
-          enemy.hull -= projectile.damage;
-          enemy.flash = 0.12;
-          if (this.hasBoon('prism-rounds')) {
-            const shardAngle = Math.atan2(projectile.vy, projectile.vx);
-            this.spawnFriendlyProjectile(projectile.x, projectile.y, shardAngle + 0.42, projectile.damage * 0.24, '#cbb3ff', false);
-            this.spawnFriendlyProjectile(projectile.x, projectile.y, shardAngle - 0.42, projectile.damage * 0.24, '#cbb3ff', false);
-          }
+        if (!circleOverlap(projectile.x, projectile.y, projectile.radius, enemy.x, enemy.y, enemy.radius)) continue;
+        const projectileAngle = Math.atan2(projectile.vy, projectile.vx);
+        if (enemy.id === 'prism' && Math.abs(wrapAngle(projectileAngle - enemy.angle)) < 0.78) {
+          projectile.friendly = false;
+          projectile.damage *= 0.8;
+          projectile.color = '#70e7ff';
+          projectile.vx *= -1;
+          projectile.vy *= -1;
+          projectile.life = Math.min(projectile.life, 2.8);
+          break;
+        }
+        if (enemy.id === 'sentinel' && Math.abs(wrapAngle(projectileAngle - enemy.angle)) < 1.05) {
           hit = true;
           break;
         }
+        enemy.hull -= projectile.damage;
+        enemy.flash = 0.12;
+        if (this.hasBoon('prism-rounds')) {
+          const shardAngle = projectileAngle;
+          this.spawnFriendlyProjectile(projectile.x, projectile.y, shardAngle + 0.42, projectile.damage * 0.24, '#cbb3ff', false);
+          this.spawnFriendlyProjectile(projectile.x, projectile.y, shardAngle - 0.42, projectile.damage * 0.24, '#cbb3ff', false);
+        }
+        hit = true;
+        break;
       }
       if (!hit && this.boss && circleOverlap(projectile.x, projectile.y, projectile.radius, this.boss.x, this.boss.y, this.boss.radius)) {
         this.boss.hull -= projectile.damage;
@@ -832,11 +865,12 @@ export class GameSimulation {
 
   private damagePlayer(amount: number): void {
     if (this.player.invulnerable > 0 || this.player.grace > 0 || this.player.abilityDuration > 0 && (this.ship === 'bulwark' || this.ship === 'mirage')) return;
+    const adjustedDamage = this.phase === 'boss' && this.sector === 1 ? amount * 0.65 : amount;
     this.nodeDamaged = true;
-    this.player.hull -= amount;
+    this.player.hull -= adjustedDamage;
     this.player.grace = 0.75;
-    this.shake = this.save.settings.reducedMotion ? 0 : Math.min(1, amount / 20);
-    this.emit({ type: 'hit', intensity: Math.min(1.5, amount / 20) });
+    this.shake = this.save.settings.reducedMotion ? 0 : Math.min(1, adjustedDamage / 20);
+    this.emit({ type: 'hit', intensity: Math.min(1.5, adjustedDamage / 20) });
     this.emit({ type: 'message', text: `HULL ${Math.max(0, Math.ceil(this.player.hull))} / GRACE WINDOW` });
   }
 

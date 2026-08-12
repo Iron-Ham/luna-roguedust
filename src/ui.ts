@@ -18,6 +18,7 @@ const SCREEN_LABELS: Record<Exclude<Screen, 'game'>, string> = {
   market: 'MARKET',
   pause: 'PAUSE',
   report: 'REPORT',
+  threat: 'THREAT',
 };
 
 export class GameUI {
@@ -84,7 +85,7 @@ export class GameUI {
   }
 
   public update(view: GameView): void {
-    const signature = `${this.screen}|${view.render.phase}|${view.render.sector}|${view.render.nodeIndex}|${view.render.runDust}|${view.render.status}|${view.save.dust}|${view.save.selectedShip}|${view.save.lastRun?.dust ?? 0}|${view.save.meta['hull-matrix']}|${view.save.threatModifiers.join(',')}|${this.choices.join(',')}`;
+    const signature = `${this.screen}|${view.render.phase}|${view.render.sector}|${view.render.nodeIndex}|${view.render.runDust}|${view.render.status}|${view.save.dust}|${view.save.selectedShip}|${view.save.lastRun?.dust ?? 0}|${view.save.meta['hull-matrix']}|${view.save.threatModifiers.join(',')}|${view.save.settings.music}|${view.save.settings.sfx}|${view.save.settings.master}|${view.save.settings.reducedMotion}|${view.save.settings.quality}|${this.choices.join(',')}`;
     this.live.textContent = view.render.status;
     if (signature === this.lastSignature) return;
     this.lastSignature = signature;
@@ -139,13 +140,13 @@ export class GameUI {
     this.callbacks.onIntent({ type: 'setting', key, value });
   };
 
-
   private renderScreen(view: GameView): string {
     if (this.screen === 'title') return this.renderTitle(view);
     if (this.screen === 'hangar') return this.renderHangar(view);
     if (this.screen === 'core') return this.renderCore(view);
     if (this.screen === 'shipyard') return this.renderShipyard(view);
     if (this.screen === 'archive') return this.renderArchive(view);
+    if (this.screen === 'threat') return this.renderThreat(view);
     if (this.screen === 'settings') return this.renderSettings(view);
     if (this.screen === 'route') return this.renderRoute(view);
     if (this.screen === 'salvage') return this.renderSalvage(view);
@@ -226,6 +227,14 @@ export class GameUI {
       ${view.save.threatUnlocked ? `<div class="archive-section"><div class="eyebrow">THREAT PROTOCOL // SELECTABLE</div><div class="heat-grid">${HEATS.map((heat) => `<label class="heat-toggle"><input type="checkbox" data-intent="toggle-heat" data-heat="${heat.id}" ${view.save.threatModifiers.includes(heat.id) ? 'checked' : ''}><span><b>${heat.name}</b><small>${heat.effect} · +${Math.round(heat.payout * 100)}% PAYOUT</small></span></label>`).join('')}</div></div>` : ''}
       ${this.renderNav('archive', view.save.threatUnlocked)}</div></section>`;
   }
+  private renderThreat(view: GameView): string {
+    const activeCount = view.save.threatModifiers.length;
+    return `<section class="screen-panel narrow-panel"><div class="screen-scroll">${this.renderHeader(view, 'THREAT PROTOCOL // VOLUNTARY')}
+      <p class="section-lede">The first clear earned the right to make the ring meaner. Every toggle is reversible and every reward is visible.</p>
+      <div class="heat-grid">${HEATS.map((heat) => `<label class="heat-toggle"><input type="checkbox" data-intent="toggle-heat" data-heat="${heat.id}" ${view.save.threatModifiers.includes(heat.id) ? 'checked' : ''}><span><b>${heat.name}</b><small>${heat.effect} · +${Math.round(heat.payout * 100)}% PAYOUT</small></span></label>`).join('')}</div>
+      <p class="notice notice-live">${activeCount ? `${activeCount} MODIFIER${activeCount === 1 ? '' : 'S'} ARMED` : 'NO MODIFIERS ARMED — BASELINE RUN'}</p>
+      ${this.renderNav('threat', true)}</div></section>`;
+  }
 
   private renderSettings(view: GameView): string {
     const settings = view.save.settings;
@@ -269,6 +278,7 @@ export class GameUI {
 
   private renderNav(active: Exclude<Screen, 'game'>, threatUnlocked: boolean): string {
     const screens: Exclude<Screen, 'game'>[] = ['hangar', 'core', 'shipyard', 'archive', 'settings'];
+    if (threatUnlocked) screens.splice(4, 0, 'threat');
     return `<nav class="screen-nav" aria-label="Hangar navigation">${screens.map((screen) => `<button class="nav-button ${active === screen ? 'is-active' : ''}" data-screen="${screen}">${SCREEN_LABELS[screen]}</button>`).join('')}${threatUnlocked ? '<span class="nav-signal">THREAT PROTOCOL ONLINE</span>' : ''}</nav>`;
   }
 

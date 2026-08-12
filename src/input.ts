@@ -87,17 +87,20 @@ export class InputController {
     const abilityPressed = this.takePressed('e') || this.takePointerAbility() || pad.ability;
     const pausePressed = this.takePressed('escape') || pad.pause;
     const firing = this.firing || this.pressed.has('control') || pad.firing;
-    const aim = pad.aimActive ? normalize(pad.aimX, pad.aimY, Math.cos(0), Math.sin(0)) : normalize(this.pointerX - 800, this.pointerY - 450, 1, 0);
+    const pointerAim = !pad.aimActive;
+    const aim = pad.aimActive ? normalize(pad.aimX, pad.aimY, 1, 0) : normalize(this.pointerX - 800, this.pointerY - 450, 1, 0);
     const snapshot: InputSnapshot = {
       moveX: Number.isFinite(pad.moveX) && Math.abs(pad.moveX) > 0.15 ? pad.moveX : move.x,
       moveY: Number.isFinite(pad.moveY) && Math.abs(pad.moveY) > 0.15 ? pad.moveY : move.y,
       aimX: aim.x,
       aimY: aim.y,
+      aimTargetX: this.pointerX,
+      aimTargetY: this.pointerY,
       firing,
       abilityPressed,
       dashPressed,
       pausePressed,
-      pointerActive: this.pointerActive,
+      pointerActive: this.pointerActive && pointerAim,
     };
     this.justPressed.clear();
     return Object.freeze(snapshot);
