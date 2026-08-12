@@ -296,6 +296,7 @@ export class GameSimulation {
       score: this.score,
       elapsed: this.elapsed,
       player: { ...this.player, position: { ...this.player.position }, velocity: { ...this.player.velocity } },
+      boons: [...this.boons],
       enemies: this.enemies.map((enemy) => ({
         id: enemy.id,
         x: enemy.x,

@@ -18,3 +18,10 @@
 - Added actual prism reflection, sentinel aperture blocking, Nova charge/release and gravity pull, Mirage decoy rendering, and Afterimage dash damage trail. Tuned elite density and first-boss damage for a readable first-clear path.
 - Current milestone: route/enemy/boss/boon content stable; persistent progression and presentation QA remain.
 - Next action: exercise ship abilities, every meta level, malformed saves, Threat Protocol toggles, settings, reduced motion, and dense late-game rendering.
+
+## 2026-08-12 — presentation pass
+
+- Canvas QA screenshot confirms cached starfield, fracture boundary, neon ship silhouettes, hostile shape grammar, boss health/phase telegraphs, and semantic DOM route/report overlays at desktop production resolution.
+- HUD now keeps ship identity, dash/ability readiness, and temporary boon build visible during combat; Canvas renderer remains capped by `HIGH`/`BALANCED`/`LOW` quality and reduced-motion settings.
+- Dev smoke passed title -> launch -> route with zero console errors, page errors, or failed requests. Production preview remains the final verification target.
+- Next action: run final fresh-state preview QA, adversarial lifecycle checks, and quality/reduced-motion evidence.

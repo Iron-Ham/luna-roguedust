@@ -205,6 +205,7 @@ export interface RenderState {
   score: number;
   elapsed: number;
   player: PlayerState;
+  boons: BoonId[];
   enemies: RenderEnemy[];
   projectiles: RenderProjectile[];
   pickups: RenderPickup[];

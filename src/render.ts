@@ -1,4 +1,4 @@
-import { getBoss, getEnemy, getShip } from './content';
+import { getBoon, getBoss, getEnemy, getShip } from './content';
 import { clamp, TAU } from './math';
 import type { Quality, RenderEnemy, RenderState } from './types';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from './types';
@@ -243,7 +243,14 @@ export class CanvasRenderer {
     ctx.fillText(`NODE ${Math.min(state.nodeIndex + 1, state.nodeTotal)}/${state.nodeTotal}`, 1320, 68);
     ctx.fillText(`HEAT ${state.heat}%`, 1320, 88);
     ctx.fillText('ESC PAUSE', 1320, 110);
+    ctx.fillStyle = '#d5ff4b';
+    ctx.fillText(`DASH ${player.dashCooldown <= 0 ? 'READY' : `${player.dashCooldown.toFixed(1)}S`} / ${state.ship.toUpperCase()}`, x, 875);
+    ctx.fillStyle = '#70e7ff';
+    ctx.fillText(`ABILITY ${player.abilityCooldown <= 0 ? 'READY' : `${player.abilityCooldown.toFixed(1)}S`}`, x + 230, 875);
     ctx.fillStyle = '#f2e9ff';
+    ctx.font = '600 11px ui-monospace, SFMono-Regular, Menlo, monospace';
+    const build = state.boons.length > 0 ? state.boons.map((id) => getBoon(id).name).join(' / ') : 'EMPTY';
+    ctx.fillText(`BUILD ${build}`.slice(0, 82), 430, 812);
     ctx.font = '600 14px ui-monospace, SFMono-Regular, Menlo, monospace';
     ctx.fillText(state.status.slice(0, 74), 430, 838);
     if (state.boss) {
