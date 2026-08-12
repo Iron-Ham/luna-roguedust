@@ -1,0 +1,26 @@
+{
+  "name": "super-roguedust",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Iron-Ham/Super-Roguedust.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Iron-Ham/Super-Roguedust/issues"
+  },
+  "homepage": "https://github.com/Iron-Ham/Super-Roguedust#readme",
+  "description": "",
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.2.1"
+  }
+}
