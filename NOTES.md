@@ -25,3 +25,12 @@
 - HUD now keeps ship identity, dash/ability readiness, and temporary boon build visible during combat; Canvas renderer remains capped by `HIGH`/`BALANCED`/`LOW` quality and reduced-motion settings.
 - Dev smoke passed title -> launch -> route with zero console errors, page errors, or failed requests. Production preview remains the final verification target.
 - Next action: run final fresh-state preview QA, adversarial lifecycle checks, and quality/reduced-motion evidence.
+
+## 2026-08-12 — final QA
+
+- `npm run build` passes against the production bundle; `npm run dev -- --host 127.0.0.1` smoke passed title -> launch -> route with zero console/page errors and no failed requests.
+- `vite preview --host 127.0.0.1` production QA passed fresh title branding, first gesture launch, route choices, safe salvage, combat movement/fire/dash/ability, death report, positive Dust recovery, hangar banking, insufficient-Dust Hull Matrix state, page reload, and upgraded-HUD persistence in a prior 110-hull run.
+- Production QA passed `GRINDER` and `RAIL WARDEN` normal path defeats in seeded snapshots, sector unlocks, ship blueprint purchase, `ELITE` boon selection, `MARKET` one-time purchase, archive records, malformed-save recovery notice, and no console errors.
+- Settings interactions persisted reduced motion and `LOW` quality; high-DPR canvas rendered at 2000x1125 logical backing resolution for a 1.25 DPR viewport. Pause/resume and visibility lifecycle produced no console errors.
+- Remaining verification limit: exhaustive five-boss/late-game density and every ship/boon phase were not all played in one fresh normal run; deterministic saved snapshots covered the first two bosses and multiple ship/content paths.
+- Production command: `npm run preview -- --host 127.0.0.1`.

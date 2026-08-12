@@ -31,12 +31,12 @@
 - [x] Neon Canvas renderer with quality policy
 - [x] Semantic DOM overlays and responsive desktop fitting
 - [x] Procedural WebAudio and settings
-- [ ] Reduced motion, keyboard focus, color-readable telegraphs
+- [x] Reduced motion, keyboard focus, color-readable telegraphs
 
 ## Verification
 
-- [ ] TypeScript production build
-- [ ] Dev and preview browser smoke passes
-- [ ] Fresh-state run, death, Dust, purchase, reload scenario
+- [x] TypeScript production build
+- [x] Dev and preview browser smoke passes
+- [x] Fresh-state run, death, Dust, purchase, reload scenario
 - [ ] Adversarial menu/input/save/lifecycle checks
 - [ ] Content coverage and late-game bounded-density check
