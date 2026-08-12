@@ -21,16 +21,16 @@
 
 ## Meta
 
-- [ ] Validated localStorage save and recovery notice
-- [ ] Hangar, core upgrades, shipyard, archive
-- [ ] Ship unlocks, sector discoveries, feats, transmissions
+- [x] Validated localStorage save and recovery notice
+- [x] Hangar, core upgrades, shipyard, archive
+- [x] Ship unlocks, sector discoveries, feats, transmissions
 - [ ] Threat Protocol after final clear
 
 ## Presentation
 
-- [ ] Neon Canvas renderer with quality policy
-- [ ] Semantic DOM overlays and responsive desktop fitting
-- [ ] Procedural WebAudio and settings
+- [x] Neon Canvas renderer with quality policy
+- [x] Semantic DOM overlays and responsive desktop fitting
+- [x] Procedural WebAudio and settings
 - [ ] Reduced motion, keyboard focus, color-readable telegraphs
 
 ## Verification
