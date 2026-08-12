@@ -249,7 +249,8 @@ export class GameUI {
   }
 
   private renderSalvage(view: GameView): string {
-    return `<section class="screen-panel choice-panel"><div class="eyebrow">SALVAGE POCKET // SECTOR ${view.render.sector}</div><h1 tabindex="-1">TAKE YOUR CUT</h1><p class="section-lede">No combat. One choice. The pressure resumes after you leave.</p><div class="choice-grid">${this.choiceButton('patch', 'PATCH', '+24 HULL', view.render.player.hull >= view.render.player.maxHull || view.save.threatModifiers.includes('scarcity') ? 'UNAVAILABLE' : 'RESTORE HULL')}${this.choiceButton('cache', 'CACHE', '+60 DUST', 'BANK THE EASY SIGNAL')}${this.choiceButton('charge', 'CHARGE', '+35 ENERGY', 'REFILL ABILITY POWER')}</div></section>`;
+    const patchUnavailable = view.render.player.hull >= view.render.player.maxHull || view.save.threatModifiers.includes('scarcity');
+    return `<section class="screen-panel choice-panel"><div class="eyebrow">SALVAGE POCKET // SECTOR ${view.render.sector}</div><h1 tabindex="-1">TAKE YOUR CUT</h1><p class="section-lede">No combat. One choice. The pressure resumes after you leave.</p><div class="choice-grid">${this.choiceButton('patch', 'PATCH', '+24 HULL', patchUnavailable ? 'UNAVAILABLE' : 'RESTORE HULL', patchUnavailable)}${this.choiceButton('cache', 'CACHE', '+60 DUST', 'BANK THE EASY SIGNAL')}${this.choiceButton('charge', 'CHARGE', '+35 ENERGY', 'REFILL ABILITY POWER')}</div></section>`;
   }
 
   private renderBoons(view: GameView): string {
@@ -285,9 +286,9 @@ export class GameUI {
   private archiveRow(found: boolean, title: string, condition: string, detail: string): string {
     return `<div class="archive-row ${found ? 'is-found' : ''}"><span class="archive-status">${found ? 'DISCOVERED' : 'UNKNOWN'}</span><b>${found ? title : '//// / UNKNOWN'}</b><span>${found ? detail : condition}</span></div>`;
   }
-
-  private choiceButton(choice: SalvageChoice, title: string, value: string, detail: string): string {
-    return `<button class="choice-card" data-intent="salvage" data-choice="${choice}"><span class="route-kind">${title}</span><strong>${value}</strong><span>${detail}</span></button>`;
+  private choiceButton(choice: SalvageChoice, title: string, value: string, detail: string, disabled = false): string {
+    const disabledAttribute = disabled ? ' disabled' : '';
+    return `<button class="choice-card" data-intent="salvage" data-choice="${choice}"${disabledAttribute}><span class="route-kind">${title}</span><strong>${value}</strong><span>${detail}</span></button>`;
   }
 }
 

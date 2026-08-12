@@ -24,7 +24,7 @@
 - [x] Validated localStorage save and recovery notice
 - [x] Hangar, core upgrades, shipyard, archive
 - [x] Ship unlocks, sector discoveries, feats, transmissions
-- [ ] Threat Protocol after final clear
+- [x] Threat Protocol after final clear
 
 ## Presentation
 
@@ -38,5 +38,5 @@
 - [x] TypeScript production build
 - [x] Dev and preview browser smoke passes
 - [x] Fresh-state run, death, Dust, purchase, reload scenario
-- [ ] Adversarial menu/input/save/lifecycle checks
+- [x] Adversarial menu/input/save/lifecycle checks
 - [ ] Content coverage and late-game bounded-density check

@@ -34,3 +34,10 @@
 - Settings interactions persisted reduced motion and `LOW` quality; high-DPR canvas rendered at 2000x1125 logical backing resolution for a 1.25 DPR viewport. Pause/resume and visibility lifecycle produced no console errors.
 - Remaining verification limit: exhaustive five-boss/late-game density and every ship/boon phase were not all played in one fresh normal run; deterministic saved snapshots covered the first two bosses and multiple ship/content paths.
 - Production command: `npm run preview -- --host 127.0.0.1`.
+
+## 2026-08-12 — balance polish
+
+- Fixed a dead-end when an `ELITE`/`RIFT` node completed with a full three-boon build: the node now advances without rendering an empty boon screen.
+- `SALVAGE/PATCH` is now a real disabled button at full hull or under `SCARCITY`; `CACHE` and `CHARGE` remain available. Removed a duplicate `CHARGE` application in the simulation.
+- Final saved-snapshot QA armed all five Threat Protocol modifiers; a live combat screenshot showed `HEAT 195%`, and the five toggles persisted after debounce. HUD displayed build, dash, ability, ship identity, and health/energy.
+- Final production preview boot, launch, route, and control checks remained at zero console errors, page errors, and failed requests.

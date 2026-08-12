@@ -551,9 +551,14 @@ export class GameSimulation {
       this.awardDust(payout);
       this.emit({ type: 'message', text: `${getRoute(route ?? 'sweep').name} CLEAR / +${payout} DUST` });
       if (route === 'elite' || route === 'rift') {
-        this.phase = 'boon';
         this.pendingBoonChoices = this.boonChoices();
-        this.emit({ type: 'boonReady', choices: [...this.pendingBoonChoices] });
+        if (this.boons.length >= MAX_BOONS || this.pendingBoonChoices.length === 0) {
+          this.emit({ type: 'message', text: 'BUILD FULL / NODE COMPLETE' });
+          this.completeNode();
+        } else {
+          this.phase = 'boon';
+          this.emit({ type: 'boonReady', choices: [...this.pendingBoonChoices] });
+        }
       } else {
         this.completeNode();
       }
