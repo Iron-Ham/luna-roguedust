@@ -7,10 +7,10 @@
 
 ## Core Loop
 
-- [ ] Fixed-step twin-stick simulation
-- [ ] Player movement, aim, fire, dash, ability, damage, death
-- [ ] Deterministic enemy director and placeholder route progression
-- [ ] Pause, visibility lifecycle, bounded entity pools
+- [x] Fixed-step twin-stick simulation
+- [x] Player movement, aim, fire, dash, ability, damage, death
+- [x] Deterministic enemy director and placeholder route progression
+- [x] Pause, visibility lifecycle, bounded entity pools
 
 ## Content
 

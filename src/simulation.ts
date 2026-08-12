@@ -118,9 +118,10 @@ export class GameSimulation {
   private nodeDamaged = false;
   private usedDash = false;
   private pausedFrom: RunPhase = 'combat';
-  private player: PlayerState = this.createPlayer('vanguard');
+  private player: PlayerState;
   private ship: ShipId = 'vanguard';
   private boons: BoonId[] = [];
+  private pendingBoonChoices: BoonId[] = [];
   private readonly enemies: EnemyEntity[] = [];
   private readonly projectiles: ProjectileEntity[] = [];
   private readonly pickups: PickupEntity[] = [];
@@ -131,6 +132,7 @@ export class GameSimulation {
   public constructor(save: SaveData, callbacks: GameCallbacks) {
     this.save = save;
     this.callbacks = callbacks;
+    this.player = this.createPlayer('vanguard');
   }
 
   public startRun(ship: ShipId, heat: HeatId[], seed: number): void {
@@ -156,6 +158,7 @@ export class GameSimulation {
     this.nodeDamaged = false;
     this.usedDash = false;
     this.boons = [];
+    this.pendingBoonChoices = [];
     this.enemies.length = 0;
     this.projectiles.length = 0;
     this.pickups.length = 0;
@@ -166,7 +169,6 @@ export class GameSimulation {
     this.prepareRoute();
     this.emit({ type: 'message', text: `${getSector(this.sector).name} / EXPEDITION STARTED` });
   }
-
   public step(snapshot: InputSnapshot, dt = FIXED_DT): void {
     if (this.phase === 'idle' || this.phase === 'route' || this.phase === 'salvage' || this.phase === 'boon' || this.phase === 'market' || this.phase === 'dead' || this.phase === 'victory') return;
     if (snapshot.pausePressed) {
@@ -215,7 +217,8 @@ export class GameSimulation {
     }
     if (kind === 'market') {
       this.phase = 'market';
-      this.emit({ type: 'marketReady', choices: this.marketChoices() });
+      this.pendingBoonChoices = this.marketChoices();
+      this.emit({ type: 'marketReady', choices: [...this.pendingBoonChoices] });
       return;
     }
     this.phase = 'combat';
@@ -238,7 +241,7 @@ export class GameSimulation {
   }
 
   public chooseBoon(id: BoonId): void {
-    if (this.phase !== 'boon' || !this.availableBoonChoices().includes(id) || this.boons.length >= MAX_BOONS) return;
+    if (this.phase !== 'boon' || !this.pendingBoonChoices.includes(id) || this.boons.length >= MAX_BOONS) return;
     this.boons.push(id);
     this.discoverBoon(id);
     this.emit({ type: 'pickup', intensity: 1.2 });
@@ -246,11 +249,15 @@ export class GameSimulation {
   }
 
   public purchaseMarket(id: BoonId): void {
-    if (this.phase !== 'market' || !this.marketChoices().includes(id) || this.runDust < 80 || this.boons.length >= MAX_BOONS) return;
+    if (this.phase !== 'market' || !this.pendingBoonChoices.includes(id) || this.runDust < 80 || this.boons.length >= MAX_BOONS) return;
     this.runDust -= 80;
     this.boons.push(id);
     this.discoverBoon(id);
     this.emit({ type: 'pickup', intensity: 1.2 });
+    this.completeNode();
+  }
+  public leaveMarket(): void {
+    if (this.phase !== 'market') return;
     this.completeNode();
   }
 
@@ -258,7 +265,8 @@ export class GameSimulation {
     if (this.phase === 'dead' || this.phase === 'victory' || this.phase === 'idle') return;
     this.phase = reason === 'victory' ? 'victory' : 'dead';
     const payout = 1 + this.save.meta['salvage-lens'] * 0.12;
-    const earned = Math.max(15, Math.floor(this.runDust * payout));
+    const recoveryFloor = Math.min(75, Math.floor(this.elapsed * 2.5));
+    const earned = Math.max(15, recoveryFloor, Math.floor(this.runDust * payout));
     const summary = {
       reason,
       dust: earned,
@@ -277,6 +285,7 @@ export class GameSimulation {
     const sector = getSector(this.sector);
     return {
       phase: this.phase,
+      ship: this.ship,
       sector: this.sector,
       sectorName: sector.name,
       nodeIndex: this.nodeIndex,
@@ -375,6 +384,7 @@ export class GameSimulation {
     this.enemies.length = 0;
     this.projectiles.length = 0;
     this.activeRoute = null;
+    this.pendingBoonChoices = [];
     this.waveElapsed = 0;
     if (this.nodeIndex >= this.nodeTotal) {
       this.startBoss();
@@ -525,7 +535,8 @@ export class GameSimulation {
       this.emit({ type: 'message', text: `${getRoute(route ?? 'sweep').name} CLEAR / +${payout} DUST` });
       if (route === 'elite' || route === 'rift') {
         this.phase = 'boon';
-        this.emit({ type: 'boonReady', choices: this.boonChoices() });
+        this.pendingBoonChoices = this.boonChoices();
+        this.emit({ type: 'boonReady', choices: [...this.pendingBoonChoices] });
       } else {
         this.completeNode();
       }
@@ -869,7 +880,6 @@ export class GameSimulation {
   private awardDust(amount: number): void {
     const payout = this.hasBoon('magnetar') ? 1.15 : 1;
     this.runDust += amount * payout;
-    this.score += amount;
   }
 
   private discoverBoon(id: BoonId): void {
@@ -899,9 +909,6 @@ export class GameSimulation {
     return choices;
   }
 
-  private availableBoonChoices(): BoonId[] {
-    return this.boonChoices();
-  }
 
   private marketChoices(): BoonId[] {
     return this.boonChoices().slice(0, 2);

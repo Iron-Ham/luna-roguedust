@@ -14,7 +14,8 @@ export type Screen =
   | 'boon'
   | 'market'
   | 'pause'
-  | 'report';
+  | 'report'
+  | 'game';
 
 export type RunPhase = 'idle' | 'route' | 'combat' | 'boss' | 'boon' | 'salvage' | 'market' | 'dead' | 'victory' | 'paused';
 export type ShipId = 'vanguard' | 'bulwark' | 'needle' | 'mirage' | 'nova';
@@ -191,6 +192,7 @@ export interface RenderBoss {
 
 export interface RenderState {
   phase: RunPhase;
+  ship: ShipId;
   sector: number;
   sectorName: string;
   nodeIndex: number;
@@ -248,6 +250,7 @@ export interface GameIntent {
     | 'choose-salvage'
     | 'choose-boon'
     | 'purchase-market'
+    | 'leave-market'
     | 'buy-meta'
     | 'select-ship'
     | 'toggle-heat'
