@@ -1,5 +1,5 @@
 import { getBoon, getBoss, getEnemy, getShip, getWeapon } from './content';
-import { clamp, TAU } from './math';
+import { clamp, projectGlobe, TAU } from './math';
 import type { Quality, RenderEnemy, RenderState } from './types';
 import { LOGICAL_HEIGHT, LOGICAL_WIDTH } from './types';
 
@@ -125,22 +125,7 @@ export class CanvasRenderer {
     ctx.beginPath();
     ctx.arc(centerX, centerY, radius, 0, TAU);
     ctx.fill();
-    ctx.save();
-    ctx.clip();
-    ctx.strokeStyle = 'rgba(112, 231, 255, 0.14)';
-    ctx.lineWidth = 1;
-    for (let index = -3; index <= 3; index += 1) {
-      const offset = index * radius * 0.22;
-      ctx.beginPath();
-      ctx.ellipse(centerX + offset * 0.22, centerY, Math.max(18, Math.abs(offset) * 0.85), radius, 0, 0, TAU);
-      ctx.stroke();
-    }
-    for (let index = -2; index <= 2; index += 1) {
-      const offset = index * radius * 0.26;
-      ctx.beginPath();
-      ctx.ellipse(centerX, centerY + offset, radius, Math.max(12, radius * 0.16), 0, 0, TAU);
-      ctx.stroke();
-    }
+    this.drawGlobeGrid(ctx, state);
     ctx.restore();
     ctx.strokeStyle = 'rgba(224, 196, 255, 0.32)';
     ctx.lineWidth = 2;
@@ -158,7 +143,56 @@ export class CanvasRenderer {
     ctx.arc(centerX, centerY, radius - 36, 2.1, 4.5);
     ctx.stroke();
     ctx.restore();
+    this.drawDepthLegend(ctx);
     if (state.boss) this.drawBossTelegraph(ctx, state);
+  }
+  private drawGlobeGrid(ctx: CanvasRenderingContext2D, _state: RenderState): void {
+    const centerX = LOGICAL_WIDTH / 2;
+    const centerY = LOGICAL_HEIGHT / 2;
+    const radius = 340;
+    ctx.save();
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(112, 231, 255, 0.14)';
+    ctx.lineWidth = 1;
+    for (let index = -3; index <= 3; index += 1) {
+      const longitude = index * Math.PI / 4;
+      ctx.beginPath();
+      for (let step = 0; step <= 36; step += 1) {
+        const latitude = -1.42 + step * (2.84 / 36);
+        const point = projectGlobe(longitude, latitude, 0, 0, centerX, centerY, radius);
+        if (step === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      }
+      ctx.stroke();
+    }
+    for (let index = -2; index <= 2; index += 1) {
+      const latitude = index * Math.PI / 8;
+      ctx.beginPath();
+      for (let step = 0; step <= 48; step += 1) {
+        const longitude = -Math.PI + step * (TAU / 48);
+        const point = projectGlobe(longitude, latitude, 0, 0, centerX, centerY, radius);
+        if (step === 0) ctx.moveTo(point.x, point.y);
+        else ctx.lineTo(point.x, point.y);
+      }
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  private drawDepthLegend(ctx: CanvasRenderingContext2D): void {
+    ctx.save();
+    ctx.fillStyle = 'rgba(184, 167, 226, 0.72)';
+    ctx.font = '600 10px ui-monospace, SFMono-Regular, Menlo, monospace';
+    ctx.fillText('NEAR SURFACE', 622, 775);
+    ctx.fillStyle = 'rgba(184, 167, 226, 0.42)';
+    ctx.fillText('FAR SIDE HIDDEN', 820, 775);
+    ctx.strokeStyle = 'rgba(112, 231, 255, 0.32)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(730, 771);
+    ctx.lineTo(800, 771);
+    ctx.stroke();
+    ctx.restore();
   }
 
   private drawAsteroids(ctx: CanvasRenderingContext2D, state: RenderState): void {

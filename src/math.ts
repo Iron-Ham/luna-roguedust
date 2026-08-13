@@ -109,6 +109,10 @@ export function advanceSurface(longitude: number, latitude: number, heading: num
   };
 }
 
+export function surfaceHeadingFromScreen(screenX: number, screenY: number): number {
+  return Math.atan2(-screenY, screenX);
+}
+
 export function projectGlobe(longitude: number, latitude: number, cameraLongitude: number, cameraLatitude: number, centerX: number, centerY: number, radius: number): GlobeProjection {
   const deltaLongitude = wrapLongitude(longitude - cameraLongitude);
   const cosLatitude = Math.cos(latitude);

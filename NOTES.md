@@ -56,3 +56,16 @@
 - Production preview fresh-state smoke reached the live globe with the overlay hidden, 2000x1125 balanced-quality canvas backing, and zero console errors, page errors, or failed requests.
 - Live QA exercised movement, mouse fire, Q weapon swap, E ability, Space dash, F bomb, score/multiplier HUD, authored `SWEEP -> SALVAGE -> ELITE` sequence, salvage cache handoff, reward chest spawning, and score milestone persistence.
 - The complete five-boss campaign and late-game density remain unplayed in one normal run because the globe's first-node hazard rate is intentionally high under stale saved progression snapshots; deterministic source paths and bounded pools are implemented, but exhaustive boss coverage is still a follow-up verification limit.
+
+## 2026-08-12 — control/readability diagnosis
+
+- Reproduced the control complaint against the production globe. The ship was projected at the arena center, but input advanced geographic longitude/latitude with a fixed axis, so screen directions felt rotated as the camera latitude changed.
+- Confirmed cargo scheduling was unconditional: once `elapsed >= cargoTimer`, every subsequent combat node could immediately create another event after expiry. Cargo is now disabled by default and no longer loops automatically.
+- Added explicit far-side suppression/depth language and a globe orientation legend. Surface movement remains deterministic and player-centered.
+
+## 2026-08-12 — control/readability fix verification
+
+- `npm run build` passes after the control and event changes.
+- Dev-browser smoke from cleared storage exercised launch, movement, mouse fire, Q weapon swap, E ability, and Space dash with zero console errors, page errors, or failed requests.
+- After 9 seconds of combat, no cargo event appeared; cargo is no longer an unavoidable recurring interruption.
+- The first focused screenshot after the long smoke landed on the death report, so the remaining visual evidence is the existing live-globe screenshot plus the explicit depth legend/source path. Full five-boss progression remains outside this fix's scope.

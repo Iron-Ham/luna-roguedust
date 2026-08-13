@@ -1,5 +1,5 @@
 import { ASTEROIDS, BOONS, getAsteroid, getBoss, getEnemy, getSector, getShip, getWeapon, SECTORS, WEAPONS } from './content';
-import { advanceSurface, clamp, clampLatitude, projectGlobe, surfaceDirection, surfaceDistance, TAU, wrapAngle, wrapLongitude, Rng } from './math';
+import { advanceSurface, clamp, clampLatitude, projectGlobe, surfaceDirection, surfaceDistance, surfaceHeadingFromScreen, TAU, wrapAngle, wrapLongitude, Rng } from './math';
 import type { AsteroidId, BoonId, BossId, ElementId, EnemyId, GameCallbacks, GameEvent, HeatId, InputSnapshot, NodeKind, PlayerState, RenderState, RunEndReason, RunMode, RunPhase, SalvageChoice, SaveData, ShipId, WeaponId } from './types';
 import { FIXED_DT, LOGICAL_HEIGHT, LOGICAL_WIDTH } from './types';
 
@@ -136,7 +136,8 @@ export class GameSimulation {
   private elapsed = 0;
   private waveElapsed = 0;
   private spawnTimer = 0;
-  private cargoTimer = 8;
+  private cargoTimer = Number.POSITIVE_INFINITY;
+  private cargoAvailable = false;
   private fireTimer = 0;
   private previousFiring = false;
   private droneTimer = 0;
@@ -186,7 +187,8 @@ export class GameSimulation {
     this.elapsed = 0;
     this.waveElapsed = 0;
     this.spawnTimer = 0.35;
-    this.cargoTimer = 7 + this.rng.next() * 8;
+    this.cargoTimer = Number.POSITIVE_INFINITY;
+    this.cargoAvailable = false;
     this.fireTimer = 0;
     this.previousFiring = false;
     this.droneTimer = 0;
@@ -377,7 +379,8 @@ export class GameSimulation {
     this.projectiles.length = 0;
     this.waveElapsed = 0;
     this.spawnTimer = 0.35;
-    this.cargoTimer = this.elapsed + 6 + this.rng.next() * 8;
+    this.cargoTimer = Number.POSITIVE_INFINITY;
+    this.cargoAvailable = false;
     if (this.activeRoute === 'salvage') {
       this.phase = 'salvage';
       this.status = 'SALVAGE POCKET // TAKE YOUR CUT';
@@ -459,15 +462,17 @@ export class GameSimulation {
     player.energy = Math.min(player.maxEnergy, player.energy + dt * 8);
     if (input.weaponNextPressed) this.cycleWeapon(1);
     if (input.weaponPrevPressed) this.cycleWeapon(-1);
-    const movement = Math.hypot(input.moveX, input.moveY) > 0.1 ? Math.atan2(-input.moveY, input.moveX) : 0;
-    const moveMagnitude = clamp(Math.hypot(input.moveX, input.moveY), 0, 1);
+    const screenX = input.moveX;
+    const screenY = input.moveY;
+    const moveMagnitude = clamp(Math.hypot(screenX, screenY), 0, 1);
+    const movement = moveMagnitude > 0.1 ? surfaceHeadingFromScreen(screenX, screenY) : 0;
     const speed = 0.58 * ship.speed * (1 + this.save.meta['vector-coils'] * 0.06) * (player.afterburner > 0 ? 1.5 : 1);
     if (moveMagnitude > 0) {
       const next = advanceSurface(player.longitude ?? 0, player.latitude ?? 0, movement, speed * moveMagnitude * dt);
       player.longitude = next.longitude;
       player.latitude = next.latitude;
-      player.velocity.x = input.moveX * speed * ARENA_RADIUS;
-      player.velocity.y = input.moveY * speed * ARENA_RADIUS;
+      player.velocity.x = screenX * speed * ARENA_RADIUS;
+      player.velocity.y = screenY * speed * ARENA_RADIUS;
     } else {
       player.velocity.x = 0;
       player.velocity.y = 0;
@@ -770,12 +775,17 @@ export class GameSimulation {
       }
     }
   }
+
   private updateCargo(_dt: number): void {
-    if (this.cargo && this.elapsed > this.cargo.expires) this.cargo = null;
-    if (!this.cargo && this.phase === 'combat' && this.elapsed >= this.cargoTimer) {
+    if (this.cargo && this.elapsed > this.cargo.expires) {
+      this.cargo = null;
+      this.cargoAvailable = false;
+    }
+    if (this.cargoAvailable && !this.cargo && this.phase === 'combat' && this.elapsed >= this.cargoTimer) {
       const reward = this.rng.chance(0.12) ? 'life' : this.rng.chance(0.25) ? 'shield' : 'bomb';
       const point = this.randomSurfacePoint(0.22);
       this.cargo = { longitude: point.longitude, latitude: point.latitude, health: 65, maxHealth: 65, reward, expires: this.elapsed + 12 };
+      this.cargoAvailable = false;
       this.emit({ type: 'cargoEvent', reward });
     }
   }
@@ -811,6 +821,7 @@ export class GameSimulation {
     if (this.cargo.reward === 'life') this.player.lives = (this.player.lives ?? 0) + 1;
     this.emit({ type: 'pickup', intensity: 1 });
     this.cargo = null;
+    this.cargoAvailable = false;
   }
 
   private updateBoss(dt: number): void {
