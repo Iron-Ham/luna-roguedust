@@ -146,33 +146,49 @@ export class CanvasRenderer {
     this.drawDepthLegend(ctx);
     if (state.boss) this.drawBossTelegraph(ctx, state);
   }
-  private drawGlobeGrid(ctx: CanvasRenderingContext2D, _state: RenderState): void {
+  private drawGlobeGrid(ctx: CanvasRenderingContext2D, state: RenderState): void {
     const centerX = LOGICAL_WIDTH / 2;
     const centerY = LOGICAL_HEIGHT / 2;
     const radius = 340;
+    const cameraLongitude = state.player.longitude ?? 0;
+    const cameraLatitude = state.player.latitude ?? 0;
     ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, TAU);
     ctx.clip();
     ctx.strokeStyle = 'rgba(112, 231, 255, 0.14)';
     ctx.lineWidth = 1;
-    for (let index = -3; index <= 3; index += 1) {
-      const longitude = index * Math.PI / 4;
+    for (let index = -4; index <= 4; index += 1) {
+      const longitude = cameraLongitude + index * Math.PI / 4;
+      let visible = false;
       ctx.beginPath();
-      for (let step = 0; step <= 36; step += 1) {
-        const latitude = -1.42 + step * (2.84 / 36);
-        const point = projectGlobe(longitude, latitude, 0, 0, centerX, centerY, radius);
-        if (step === 0) ctx.moveTo(point.x, point.y);
-        else ctx.lineTo(point.x, point.y);
+      for (let step = 0; step <= 48; step += 1) {
+        const latitude = -1.42 + step * (2.84 / 48);
+        const point = projectGlobe(longitude, latitude, cameraLongitude, cameraLatitude, centerX, centerY, radius);
+        if (point.depth > -0.02) {
+          if (!visible) ctx.moveTo(point.x, point.y);
+          else ctx.lineTo(point.x, point.y);
+          visible = true;
+        } else {
+          visible = false;
+        }
       }
       ctx.stroke();
     }
-    for (let index = -2; index <= 2; index += 1) {
-      const latitude = index * Math.PI / 8;
+    for (let index = -3; index <= 3; index += 1) {
+      const latitude = cameraLatitude + index * Math.PI / 8;
+      let visible = false;
       ctx.beginPath();
-      for (let step = 0; step <= 48; step += 1) {
-        const longitude = -Math.PI + step * (TAU / 48);
-        const point = projectGlobe(longitude, latitude, 0, 0, centerX, centerY, radius);
-        if (step === 0) ctx.moveTo(point.x, point.y);
-        else ctx.lineTo(point.x, point.y);
+      for (let step = 0; step <= 64; step += 1) {
+        const longitude = cameraLongitude - Math.PI + step * (TAU / 64);
+        const point = projectGlobe(longitude, latitude, cameraLongitude, cameraLatitude, centerX, centerY, radius);
+        if (point.depth > -0.02) {
+          if (!visible) ctx.moveTo(point.x, point.y);
+          else ctx.lineTo(point.x, point.y);
+          visible = true;
+        } else {
+          visible = false;
+        }
       }
       ctx.stroke();
     }
@@ -183,9 +199,9 @@ export class CanvasRenderer {
     ctx.save();
     ctx.fillStyle = 'rgba(184, 167, 226, 0.72)';
     ctx.font = '600 10px ui-monospace, SFMono-Regular, Menlo, monospace';
-    ctx.fillText('NEAR SURFACE', 622, 775);
+    ctx.fillText('SHIP-CENTERED SURFACE', 622, 775);
     ctx.fillStyle = 'rgba(184, 167, 226, 0.42)';
-    ctx.fillText('FAR SIDE HIDDEN', 820, 775);
+    ctx.fillText('FAR SIDE NOT PLAYABLE', 820, 775);
     ctx.strokeStyle = 'rgba(112, 231, 255, 0.32)';
     ctx.lineWidth = 2;
     ctx.beginPath();

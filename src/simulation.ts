@@ -332,7 +332,9 @@ export class GameSimulation {
       }),
       projectiles: this.projectiles.map((projectile) => {
         const point = project(projectile.longitude, projectile.latitude);
-        return { x: point.x, y: point.y, depth: point.depth, vx: Math.cos(projectile.heading) * projectile.speed * 180, vy: -Math.sin(projectile.heading) * projectile.speed * 180, friendly: projectile.friendly, radius: projectile.radius, life: projectile.life, color: projectile.color, element: projectile.element, arc: projectile.travelled };
+        const trail = advanceSurface(projectile.longitude, projectile.latitude, projectile.heading, -0.035);
+        const trailPoint = project(trail.longitude, trail.latitude);
+        return { x: point.x, y: point.y, depth: point.depth, vx: (point.x - trailPoint.x) * 24, vy: (point.y - trailPoint.y) * 24, friendly: projectile.friendly, radius: projectile.radius, life: projectile.life, color: projectile.color, element: projectile.element, arc: projectile.travelled };
       }),
       pickups: this.pickups.map((pickup) => {
         const point = project(pickup.longitude, pickup.latitude);

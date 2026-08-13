@@ -69,3 +69,10 @@
 - Dev-browser smoke from cleared storage exercised launch, movement, mouse fire, Q weapon swap, E ability, and Space dash with zero console errors, page errors, or failed requests.
 - After 9 seconds of combat, no cargo event appeared; cargo is no longer an unavoidable recurring interruption.
 - The first focused screenshot after the long smoke landed on the death report, so the remaining visual evidence is the existing live-globe screenshot plus the explicit depth legend/source path. Full five-boss progression remains outside this fix's scope.
+
+## 2026-08-12 — globe singularity fix
+
+- Reproduced the reported central black-hole behavior. The gameplay camera was ship-centered, but the globe graticule was rendered with a hard-coded `(0, 0)` camera, creating a false fixed rotation center.
+- Fixed graticule projection to use the ship longitude/latitude and split grid strokes at the far-side boundary. The surface now visually rotates around the ship rather than a hidden world origin.
+- Projectile trails now derive from projected surface motion instead of a fixed screen-space velocity, so shots keep their surface tangent and no longer appear to sink toward the stale center.
+- Browser smoke after launch, movement, weapon cycling, ability, and dash showed the ship-centered globe, coherent projectile trails, and zero console/page/request errors.
