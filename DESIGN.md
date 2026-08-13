@@ -22,7 +22,7 @@ Audience: desktop arcade/roguelite players who want readable combat, expressive 
 
 ## Run contract
 
-- A normal run lasts approximately 20–30 minutes: three route nodes per sector followed by that sector's boss. Early sectors are shorter and forgiving; later sectors add patterns and enemies rather than only health multipliers.
+- A normal campaign is five named globe levels. Each level is three authored surface nodes followed by its boss; each node has a fixed dramatic role while enemy composition and salvage placement stay seeded. After the fifth boss, `ENDLESS` repeats the globe sequence with a score multiplier and rising pressure.
 - The starter **VANGUARD** is complete and viable from a fresh save: movement, primary fire, dash, ability, and a boss strategy are available with no meta purchases.
 - Death resets temporary build state but never erases earned Dust, discoveries, boss records, ship blueprints, or challenge marks.
 - Every run awards run-end Dust even on immediate death. The hangar explains what survived and offers **LAUNCH AGAIN**.
@@ -30,28 +30,28 @@ Audience: desktop arcade/roguelite players who want readable combat, expressive 
 
 ## Controls and accessibility
 
-- Keyboard/mouse: `WASD` movement, mouse aim, hold left mouse primary fire, `E` or right mouse ability, `Space` or `Shift` dash, `Esc` pause. Arrow keys are movement aliases.
-- Gamepad API: left stick move, right stick aim, right trigger fire, left trigger ability, `A` dash, Start pause. Keyboard/mouse remains guaranteed.
+- Keyboard/mouse: `WASD` movement across the globe surface, mouse aim, hold left mouse primary fire, `Q`/`R` or wheel weapon swap, `E` or right mouse ability, `F`/`B` bomb, `Space` or `Shift` dash, `Esc` pause. Arrow keys are movement aliases.
+- Gamepad API: left stick move, right stick aim, right trigger fire, left trigger ability, `A` dash, `RB/LB` weapon swap, `Y` bomb, Start pause. Keyboard/mouse remains guaranteed.
+- Bullets travel along the visible globe surface, not through screen space. Every projectile has a finite angular range, element, and deterministic surface path.
 - The game surface suppresses context menus while a run is active. First `LAUNCH` click resumes/creates AudioContext; denial degrades to silent play and a visible settings state.
 - All actions have labeled buttons in DOM menus, focus-visible styling, readable contrast, `aria-live` status, and non-color telegraphs. `prefers-reduced-motion` defaults reduced motion but the setting is reversible.
 
-## Arena and routes
+## Arena and authored levels
 
-The simulation uses a bounded 1600x900 logical playfield with a visible circular fracture boundary. The camera is fixed. Player movement is free inside; enemies enter through edge portals. Each sector exposes three seeded route choices in a DOM overlay. Route kinds: `SWEEP`, `SALVAGE`, `ELITE`, `RIFT`, and `MARKET`; every kind is reachable before the final sector through weighted selection.
+The simulation uses a bounded 1600x900 logical globe projection. The player is always centered while longitude and latitude advance on the sphere; depth controls occlusion, alpha, and scale cues. Latitude is clamped before it reaches a pole singularity, and longitude wraps continuously.
 
-- `SWEEP`: paced combat wave.
+- `SWEEP`: paced surface combat.
 - `SALVAGE`: safe choice between `PATCH` (+24 hull up to max), `CACHE` (+60 run Dust), and `CHARGE` (+35 ability energy).
-- `ELITE`: dense combat wave with elite enemy, then choose two unlocked boons.
-- `RIFT`: hazardous high-Dust wave with guaranteed boon choice.
+- `ELITE`: dense globe combat with an elite target, then two boon choices.
+- `RIFT`: hazardous high-Dust surface wave with a guaranteed boon choice.
 - `MARKET`: buy one temporary boon for run Dust or leave.
 
-Three chosen nodes open the sector boss gate. Boss victory gives sector Dust, unlock checks, a transmission card, and the next route. Death ends the run and banks run Dust. The route overlay always shows sector, node risk, projected reward, and current run Dust.
+The node sequence is authored per sector rather than selected from route roulette. Three completed nodes open that sector's boss gate. Chests appear on the globe after combat nodes and must be damaged to release a bomb, shield, life, or weapon-cache reward. Cargo signals drift into combat and expire if ignored.
 
 ## Combat and temporary build
-
-Fixed-step simulation is 60 Hz. Player starts with 100 hull, 0.8-second dash cooldown, 0.25-second dash invulnerability, and 0.75-second post-hit grace. Meta and ship modifiers apply at run start.
-
-Vanguard fires a forward pulse stream aimed at mouse/right-stick direction. `E` emits a short radial repulsor burst with a six-second base cooldown. Dash is movement plus invulnerability, not damage unless a boon adds a trail. Boons are capped at three slots and offered only after `ELITE`, `RIFT`, boss victories, or a purchased market item.
+- Fixed-step simulation is 60 Hz. Player starts with 100 hull, 0.8-second dash cooldown, 0.25-second dash invulnerability, and 0.75-second post-hit grace. Meta and ship modifiers apply at run start.
+- Vanguard starts on `PULSE`/kinetic. `SCATTER`/plasma, `RAIL`/cryo, and `NOVA`/void are hot-swappable with `Q`/`R` or the mouse wheel. Enemy and asteroid weaknesses are explicit and produce a visible element-hit multiplier.
+- `E` emits a short radial repulsor burst with a six-second base cooldown. `F`/`B` spends a bomb to clear hostile projectiles and damage surface threats. Dash is movement plus invulnerability, not damage unless a boon adds a trail.
 
 | Boon | Effect |
 | --- | --- |
@@ -65,10 +65,9 @@ Vanguard fires a forward pulse stream aimed at mouse/right-stick direction. `E` 
 | `NULL SHELL` | ability kills restore 0.5s dash cooldown; ability damage -12% |
 
 Starting runs offer `OVERCLOCK`, `ECHO CHAMBER`, and `MAGNETAR`. Availability follows the discovery schedule. Every boon has a visible description, actual simulation effect, and archive entry.
+## Economy, score, and meta
 
-## Economy and meta
-
-The sole banked currency is **Dust**. Enemies award 1–4, route clears 20–70, elite/rift risk 80–140, bosses 180–450 by sector. Dust banks at run end and after every meta purchase, never per frame. A short first run should make the first Hull Matrix affordable; the first three runs should reveal a spend or unlock without requiring a boss.
+The sole banked currency is **Dust**. Enemies award 1–4, authored node clears 20–140, chests 75, bosses 180–450 by sector. Score rises from kills, node objects, chests, bombs, and bosses; consecutive kills raise a visible multiplier that decays after a short break. Crossing profile milestones at 1,000 / 2,500 / 5,000 / 10,000 / 20,000 score awards persistent Dust once per milestone. Dust banks at run end and after every meta purchase, never per frame.
 
 | Meta branch | Costs | Effect per level |
 | --- | --- | --- |
@@ -121,9 +120,9 @@ After the first Null Crown victory, toggles persist in settings and affect rewar
 
 ## Presentation, audio, and architecture
 
-Near-black blue-violet space, acid chartreuse player systems, ember orange hostile warnings, hot coral damage, pale lilac/white neutral UI. Sharp arcs, rings, debris, stars, streaks, and restrained additive glow. No pure black/white or generic purple/cyan gradients. Canvas logical space is 1600x900 with DPR cap 1.5 and CSS aspect fitting. Menus and HUD are semantic DOM over the canvas. Local system font stacks only.
+Near-black blue-violet space, acid chartreuse player systems, ember orange hostile warnings, hot coral damage, pale lilac/white neutral UI. The globe is a shaded sphere with latitude/longitude wireframe, depth occlusion, surface trails, crisp ship silhouettes, and restrained additive glow. No pure black/white or generic purple/cyan gradients. Canvas logical space is 1600x900 with DPR cap 1.5 and CSS aspect fitting. Menus and HUD are semantic DOM over the canvas. Local system font stacks only.
 
-A single lazy procedural WebAudio context owns master/music/SFX/UI buses. Voices are bounded and envelopes scheduled: laser pitch sweeps, filtered-noise impacts, pickup chimes, dash noise, phase stingers, and a low-voice arpeggiated music bed whose mode tracks sector/boss. Settings include music, SFX, master volume, reduced motion, and visual quality (`HIGH`, `BALANCED`, `LOW`). Reduced motion removes shake, limits trails, and preserves telegraphs.
+A single lazy procedural WebAudio context owns master/music/SFX/UI buses. Voices are bounded and envelopes scheduled: weapon-specific pitch sweeps, filtered impacts, pickup/cargo chimes, dash noise, phase stingers, and a low-voice arpeggiated music bed whose mode tracks sector/boss/endless. Settings include music, SFX, master volume, reduced motion, and visual quality (`HIGH`, `BALANCED`, `LOW`). Reduced motion removes shake, limits trails, and preserves telegraphs.
 
 Source boundary:
 
@@ -140,14 +139,13 @@ Source boundary:
 - `src/styles.css`: local responsive styling and tokens.
 - `index.html`: metadata and root mount only.
 
-Simulation uses pooled bounded caps: 96 enemies, 480 projectiles, 1,800 particles, and 96 pickups. All spawn decisions use a seeded RNG. `Math.random` is forbidden in simulation content. Persistence writes only at run end, purchases, unlock milestones, visibility changes, and pagehide. Hidden tabs pause simulation and suspend audio; resume resets timing and caps catch-up.
+Simulation uses pooled bounded caps: 96 enemies, 480 projectiles, 42 asteroids, 1,800 particles, and 96 pickups. All spawn decisions and authored level variations use a seeded RNG. `Math.random` is forbidden in simulation content. Persistence writes only at run end, purchases, unlock milestones, score milestones, visibility changes, and pagehide. Hidden tabs pause simulation and suspend audio; resume resets timing and caps catch-up.
 
 ## Balance targets and QA checklist
 
 - Fresh launch reaches a playable first wave without a purchase or boon.
-- A 30–45 second failed run earns enough for Hull Matrix I (75 Dust).
-- Run length target is 20–30 minutes with warm-up, escalation, recovery, and boss spike rather than monotonic difficulty.
-- First boss is readable with Vanguard and no meta upgrades.
-- No route, boon, ship, enemy, boss phase, feat, meta level, or modifier exists only as dead UI.
+- A 30–45 second failed run earns enough for Hull Matrix I (75 Dust) when the pilot collects salvage; immediate death still pays a recovery floor.
+- The normal campaign is five globe levels and three authored nodes per level; first boss is readable with Vanguard and no meta upgrades.
+- Score, multiplier, weapon swap, element weakness, cargo, chest reward, ship, enemy, boss phase, feat, meta level, and modifier all have observable gameplay effects and readable feedback.
 - Production `vite preview` pass: fresh title, launch/audio fallback, controls, death report, Dust persistence, atomic Hull Matrix purchase, reload, stronger next run.
 - Adversarial pass: idle, rapid keys/clicks, insufficient/max purchases, repeated routes, pause, hide/show, refresh, corrupted save, reduced motion, low quality, high DPR, dense late-game entities. No console errors, duplicate transitions, runaway entity counts, or hidden simulation progress.

@@ -71,6 +71,54 @@ export function moveTowardCircle(x: number, y: number, cx: number, cy: number, r
   return { x: cx + (dx / length) * maxRadius, y: cy + (dy / length) * maxRadius };
 }
 
+export interface GlobeProjection {
+  x: number;
+  y: number;
+  depth: number;
+}
+
+export function wrapLongitude(longitude: number): number {
+  let result = longitude % TAU;
+  if (result <= -Math.PI) result += TAU;
+  if (result > Math.PI) result -= TAU;
+  return result;
+}
+
+export function clampLatitude(latitude: number): number {
+  return clamp(latitude, -1.42, 1.42);
+}
+
+export function surfaceDistance(longitudeA: number, latitudeA: number, longitudeB: number, latitudeB: number): number {
+  const deltaLatitude = latitudeB - latitudeA;
+  const deltaLongitude = wrapLongitude(longitudeB - longitudeA);
+  const sine = Math.sin(deltaLatitude * 0.5) ** 2 + Math.cos(latitudeA) * Math.cos(latitudeB) * Math.sin(deltaLongitude * 0.5) ** 2;
+  return 2 * Math.atan2(Math.sqrt(sine), Math.sqrt(Math.max(0, 1 - sine)));
+}
+
+export function surfaceDirection(longitudeA: number, latitudeA: number, longitudeB: number, latitudeB: number): Vec2 {
+  const latitudeMean = (latitudeA + latitudeB) * 0.5;
+  return normalize(wrapLongitude(longitudeB - longitudeA) * Math.cos(latitudeMean), latitudeB - latitudeA, 1, 0);
+}
+
+export function advanceSurface(longitude: number, latitude: number, heading: number, angularDistance: number): { longitude: number; latitude: number } {
+  const nextLatitude = clampLatitude(latitude + Math.sin(heading) * angularDistance);
+  const latitudeScale = Math.max(0.16, Math.cos(nextLatitude));
+  return {
+    longitude: wrapLongitude(longitude + (Math.cos(heading) * angularDistance) / latitudeScale),
+    latitude: nextLatitude,
+  };
+}
+
+export function projectGlobe(longitude: number, latitude: number, cameraLongitude: number, cameraLatitude: number, centerX: number, centerY: number, radius: number): GlobeProjection {
+  const deltaLongitude = wrapLongitude(longitude - cameraLongitude);
+  const cosLatitude = Math.cos(latitude);
+  const rawX = cosLatitude * Math.sin(deltaLongitude);
+  const rawY = Math.sin(latitude);
+  const rawDepth = cosLatitude * Math.cos(deltaLongitude);
+  const y = rawY * Math.cos(cameraLatitude) - rawDepth * Math.sin(cameraLatitude);
+  const depth = rawY * Math.sin(cameraLatitude) + rawDepth * Math.cos(cameraLatitude);
+  return { x: centerX + rawX * radius, y: centerY - y * radius, depth };
+}
 export class Rng {
   private state: number;
 

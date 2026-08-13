@@ -41,3 +41,18 @@
 - `SALVAGE/PATCH` is now a real disabled button at full hull or under `SCARCITY`; `CACHE` and `CHARGE` remain available. Removed a duplicate `CHARGE` application in the simulation.
 - Final saved-snapshot QA armed all five Threat Protocol modifiers; a live combat screenshot showed `HEAT 195%`, and the five toggles persisted after debounce. HUD displayed build, dash, ability, ship identity, and health/energy.
 - Final production preview boot, launch, route, and control checks remained at zero console errors, page errors, and failed requests.
+
+## 2026-08-12 — globe revision
+
+- Replaced the planar arena with a player-centered longitude/latitude globe. Surface movement wraps longitude, clamps latitude, and projects depth for occlusion; projectiles and enemy motion use finite angular surface ranges.
+- Replaced route roulette with authored per-sector node sequences. Salvage, elite, rift, market, chest rewards, cargo signals, and the five boss gates remain deterministic under seeded runs.
+- Added Pulse/Scatter/Rail/Nova weapon cycling, kinetic/plasma/cryo/void weaknesses, score multipliers, persistent score-milestone Dust, cargo supplies, destructible reward chests, and controller-first HUD telemetry.
+- Production globe screenshot confirms sphere shading, graticule lines, depth-readable entities, surface combat, score/multiplier HUD, weapon identity, bomb/shield counts, and no browser console/page/request errors.
+- Remaining verification: sustained full campaign progression and late-game density stress after the globe migration.
+
+## 2026-08-12 — globe QA follow-up
+
+- `npm run build` passes after the migration.
+- Production preview fresh-state smoke reached the live globe with the overlay hidden, 2000x1125 balanced-quality canvas backing, and zero console errors, page errors, or failed requests.
+- Live QA exercised movement, mouse fire, Q weapon swap, E ability, Space dash, F bomb, score/multiplier HUD, authored `SWEEP -> SALVAGE -> ELITE` sequence, salvage cache handoff, reward chest spawning, and score milestone persistence.
+- The complete five-boss campaign and late-game density remain unplayed in one normal run because the globe's first-node hazard rate is intentionally high under stale saved progression snapshots; deterministic source paths and bounded pools are implemented, but exhaustive boss coverage is still a follow-up verification limit.

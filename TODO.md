@@ -40,3 +40,18 @@
 - [x] Fresh-state run, death, Dust, purchase, reload scenario
 - [x] Adversarial menu/input/save/lifecycle checks
 - [ ] Content coverage and late-game bounded-density check
+
+## Globe Revision
+
+- [x] Model traversable 3D globe arena
+- [x] Aim bullets along globe surface range
+- [x] Replace route choices with authored level sequence
+- [x] Add hot-swappable weapons and element weaknesses
+- [x] Add score multiplier and milestone rewards
+- [x] Add cargo events chests and pickups
+- [x] Upgrade globe rendering and arcade audio
+- [x] Add controller-first HUD and weapon feedback
+- [x] Update design notes and balance contract
+- [ ] Run TypeScript production build
+- [ ] Exercise production globe and progression flow
+- [ ] Record QA findings and final commit

@@ -166,7 +166,7 @@ export class GameUI {
         <div class="starter-card"><strong>VANGUARD</strong><span>Balanced pulse cannon / repulsor burst</span><span>100 HULL · 100% VECTOR · READY</span></div>
       </div>
       <button class="button button-primary button-launch" data-intent="launch">LAUNCH <span>↗</span></button>
-      <p class="microcopy">WASD / ARROWS MOVE · MOUSE AIM · HOLD LMB FIRE · E ABILITY · SPACE DASH</p>
+      <p class="microcopy">WASD / ARROWS MOVE · MOUSE AIM · HOLD LMB FIRE · Q/R WEAPON · E ABILITY · SPACE DASH · F BOMB</p>
       ${view.save.recoveryNotice ? `<p class="notice notice-warn">${escapeHTML(view.save.recoveryNotice)}</p>` : ''}
     </section>`;
   }
@@ -270,7 +270,7 @@ export class GameUI {
   private renderReport(view: GameView): string {
     const run = view.save.lastRun;
     if (!run) return this.renderHangar(view);
-    return `<section class="screen-panel report-panel"><div class="eyebrow">EXPEDITION REPORT // ${run.reason === 'victory' ? 'SIGNAL STABLE' : 'HULL LOST'}</div><h1 tabindex="-1">${run.reason === 'victory' ? 'THE RING BENDS' : 'DUST SURVIVES'}</h1><div class="report-dust"><span>DUST RECOVERED</span><strong>+${run.dust}</strong></div><div class="report-grid"><span>REACHED SECTOR <b>${run.sector}/5</b></span><span>HOSTILES BROKEN <b>${run.kills}</b></span><span>BUILD RESET <b>YES</b></span><span>SHIP <b>${run.ship.toUpperCase()}</b></span></div><p class="section-lede">Your temporary build is gone. Your Dust, records, discoveries, and blueprint progress remain.</p><button class="button button-primary" data-intent="restart">LAUNCH AGAIN <span>↗</span></button><button class="button" data-screen="hangar">RETURN TO HANGAR</button></section>`;
+    return `<section class="screen-panel report-panel"><div class="eyebrow">EXPEDITION REPORT // ${run.reason === 'victory' ? 'SIGNAL STABLE' : 'HULL LOST'}</div><h1 tabindex="-1">${run.reason === 'victory' ? 'THE RING BENDS' : 'DUST SURVIVES'}</h1><div class="report-dust"><span>DUST RECOVERED</span><strong>+${run.dust}</strong></div><div class="report-grid"><span>REACHED SECTOR <b>${run.sector}/5</b></span><span>HOSTILES BROKEN <b>${run.kills}</b></span><span>SCORE <b>${run.score.toLocaleString()}</b></span><span>MODE <b>${run.mode.toUpperCase()}</b></span><span>SHIP <b>${run.ship.toUpperCase()}</b></span><span>BUILD RESET <b>YES</b></span></div><p class="section-lede">Your temporary build is gone. Your Dust, score milestones, discoveries, and blueprint progress remain.</p><button class="button button-primary" data-intent="restart">LAUNCH AGAIN <span>↗</span></button><button class="button" data-screen="hangar">RETURN TO HANGAR</button></section>`;
   }
 
   private renderHeader(view: GameView, title: string): string {

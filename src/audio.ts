@@ -60,7 +60,7 @@ export class AudioEngine {
     return { ...this.settings, audioUnavailable: this.unavailable };
   }
 
-  public playSfx(kind: SfxKind, intensity = 1): void {
+  public playSfx(kind: SfxKind, intensity = 1, pitchShift = 0): void {
     if (!this.context || !this.buses || this.unavailable || this.settings.sfx <= 0 || this.activeVoices >= MAX_VOICES) return;
     const now = this.context.currentTime;
     const clamped = Math.max(0.15, Math.min(1.5, intensity));
@@ -69,7 +69,7 @@ export class AudioEngine {
     const oscillator = this.context.createOscillator();
     const filter = this.context.createBiquadFilter();
     const duration = kind === 'bossPhase' || kind === 'victory' ? 0.38 : kind === 'hit' ? 0.12 : 0.08;
-    const base = kind === 'shot' ? 180 + clamped * 90 : kind === 'dash' ? 90 : kind === 'ability' ? 110 : kind === 'pickup' ? 620 : kind === 'bossPhase' ? 72 : kind === 'victory' ? 330 : kind === 'death' ? 55 : 260;
+    const base = (kind === 'shot' ? 180 + clamped * 90 : kind === 'dash' ? 90 : kind === 'ability' ? 110 : kind === 'pickup' ? 620 : kind === 'bossPhase' ? 72 : kind === 'victory' ? 330 : kind === 'death' ? 55 : 260) + pitchShift;
     const end = kind === 'shot' ? base * 1.8 : kind === 'dash' ? base * 2.2 : kind === 'hit' ? base * 0.55 : base * 1.15;
     oscillator.type = kind === 'hit' || kind === 'death' ? 'sawtooth' : kind === 'pickup' || kind === 'victory' ? 'triangle' : 'square';
     oscillator.frequency.setValueAtTime(base, now);

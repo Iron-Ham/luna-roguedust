@@ -27,13 +27,16 @@ export function createDefaultSave(): SaveData {
       'phase-lattice': 0,
       'resonance-core': 0,
     },
-    discovered: ['vanguard', 'overclock', 'magnetar', 'rust-expanse', 'grinder'],
+    discovered: ['vanguard', 'overclock', 'magnetar', 'rust-expanse', 'grinder', 'pulse', 'scatter', 'rail', 'nova'],
     defeatedBosses: [],
     transmissions: [],
     feats: [],
     totalKills: 0,
+    bestScore: 0,
+    scoreMilestones: [],
     highestSector: 1,
     threatUnlocked: false,
+    endlessUnlocked: false,
     threatModifiers: [],
     settings: {
       music: 0.58,
@@ -90,8 +93,10 @@ function isRunSummary(value: unknown): boolean {
   return (
     isOneOf(value.reason, ['destroyed', 'victory', 'abandoned']) &&
     isFiniteNumber(value.dust) && value.dust >= 0 &&
-    isIntegerInRange(value.sector, 1, 5) &&
+    isIntegerInRange(value.sector, 1, 1000) &&
     isIntegerInRange(value.kills, 0, 100000) &&
+    (value.score === undefined || isFiniteNumber(value.score)) &&
+    (value.mode === undefined || isOneOf(value.mode, ['campaign', 'endless'])) &&
     isStringArray(value.boons, BOON_IDS) &&
     isOneOf(value.ship, SHIP_IDS) &&
     (value.boss === undefined || isOneOf(value.boss, BOSS_IDS)) &&
@@ -112,8 +117,11 @@ function isSaveData(value: unknown): value is SaveData {
     Array.isArray(value.transmissions) && value.transmissions.every((item) => typeof item === 'string') &&
     Array.isArray(value.feats) && value.feats.every((item) => typeof item === 'string') &&
     isIntegerInRange(value.totalKills, 0, 10000000) &&
-    isIntegerInRange(value.highestSector, 1, 5) &&
+    (value.bestScore === undefined || isFiniteNumber(value.bestScore)) &&
+    (value.scoreMilestones === undefined || Array.isArray(value.scoreMilestones) && value.scoreMilestones.every((item) => isFiniteNumber(item))) &&
+    isIntegerInRange(value.highestSector, 1, 1000) &&
     typeof value.threatUnlocked === 'boolean' &&
+    (value.endlessUnlocked === undefined || typeof value.endlessUnlocked === 'boolean') &&
     isStringArray(value.threatModifiers, HEAT_IDS) &&
     isSettings(value.settings) &&
     isRunSummary(value.lastRun)
@@ -133,7 +141,15 @@ export function loadSave(storage: Storage | null): SaveData {
     const parsed: unknown = JSON.parse(raw);
     if (!isSaveData(parsed)) return withRecoveryNotice(fresh, 'SAVE RECOVERED — MALFORMED PROFILE RESET');
     if (!parsed.unlockedShips.includes(parsed.selectedShip)) parsed.selectedShip = 'vanguard';
-    return parsed;
+    const legacy = parsed as SaveData & { bestScore?: number; scoreMilestones?: number[]; endlessUnlocked?: boolean };
+    if (legacy.lastRun) legacy.lastRun = { ...legacy.lastRun, score: legacy.lastRun.score ?? 0, mode: legacy.lastRun.mode ?? 'campaign' };
+    return {
+      ...fresh,
+      ...legacy,
+      bestScore: legacy.bestScore ?? 0,
+      scoreMilestones: legacy.scoreMilestones ?? [],
+      endlessUnlocked: legacy.endlessUnlocked ?? false,
+    };
   } catch {
     return withRecoveryNotice(fresh, 'SAVE RECOVERED — PROFILE RESET');
   }

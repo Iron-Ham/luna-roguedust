@@ -1,7 +1,7 @@
 import { clamp, normalize } from './math';
 import type { InputSnapshot } from './types';
 
-const CONTROL_KEYS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'e', ' ', 'shift', 'escape']);
+const CONTROL_KEYS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowleft', 'arrowdown', 'arrowright', 'e', 'q', 'r', 'f', 'b', ' ', 'shift', 'escape']);
 
 export class InputController {
   private readonly pressed = new Set<string>();
@@ -50,6 +50,11 @@ export class InputController {
     if (event.button === 0) this.firing = false;
   };
 
+  private readonly onWheel = (event: WheelEvent): void => {
+    if (!this.active) return;
+    event.preventDefault();
+    this.justPressed.add(event.deltaY < 0 ? 'weapon-next-pointer' : 'weapon-prev-pointer');
+  };
   private readonly onBlur = (): void => {
     this.pressed.clear();
     this.justPressed.clear();
@@ -69,6 +74,7 @@ export class InputController {
     canvas.addEventListener('pointermove', this.onPointerMove);
     canvas.addEventListener('pointerdown', this.onPointerDown, { passive: false });
     canvas.addEventListener('pointerup', this.onPointerUp);
+    canvas.addEventListener('wheel', this.onWheel, { passive: false });
     canvas.addEventListener('contextmenu', this.onContextMenu);
     this.attached = true;
   }
@@ -85,6 +91,9 @@ export class InputController {
     const pad = this.readGamepad();
     const dashPressed = this.takePressed(' ', 'shift') || pad.dash;
     const abilityPressed = this.takePressed('e') || this.takePointerAbility() || pad.ability;
+    const weaponNextPressed = this.takePressed('q') || this.takePressed('weapon-next-pointer') || pad.weaponNext;
+    const weaponPrevPressed = this.takePressed('r') || this.takePressed('weapon-prev-pointer') || pad.weaponPrev;
+    const bombPressed = this.takePressed('f', 'b') || pad.bomb;
     const pausePressed = this.takePressed('escape') || pad.pause;
     const firing = this.firing || this.pressed.has('control') || pad.firing;
     const pointerAim = !pad.aimActive;
@@ -99,6 +108,9 @@ export class InputController {
       firing,
       abilityPressed,
       dashPressed,
+      bombPressed,
+      weaponNextPressed,
+      weaponPrevPressed,
       pausePressed,
       pointerActive: this.pointerActive && pointerAim,
     };
@@ -114,6 +126,7 @@ export class InputController {
     this.canvas?.removeEventListener('pointermove', this.onPointerMove);
     this.canvas?.removeEventListener('pointerdown', this.onPointerDown);
     this.canvas?.removeEventListener('pointerup', this.onPointerUp);
+    this.canvas?.removeEventListener('wheel', this.onWheel);
     this.canvas?.removeEventListener('contextmenu', this.onContextMenu);
     this.canvas = null;
     this.attached = false;
@@ -129,12 +142,12 @@ export class InputController {
     return pressed;
   }
 
-  private readGamepad(): { moveX: number; moveY: number; aimX: number; aimY: number; aimActive: boolean; firing: boolean; ability: boolean; dash: boolean; pause: boolean } {
+  private readGamepad(): { moveX: number; moveY: number; aimX: number; aimY: number; aimActive: boolean; firing: boolean; ability: boolean; dash: boolean; bomb: boolean; weaponNext: boolean; weaponPrev: boolean; pause: boolean } {
     const gamepads = typeof navigator.getGamepads === 'function' ? navigator.getGamepads() : [];
     const pad = Array.from(gamepads).find((candidate): candidate is Gamepad => candidate !== null);
     if (!pad) {
       this.previousPadButtons = [];
-      return { moveX: 0, moveY: 0, aimX: 0, aimY: 0, aimActive: false, firing: false, ability: false, dash: false, pause: false };
+      return { moveX: 0, moveY: 0, aimX: 0, aimY: 0, aimActive: false, firing: false, ability: false, dash: false, bomb: false, weaponNext: false, weaponPrev: false, pause: false };
     }
     const axis = (index: number): number => clamp(pad.axes[index] ?? 0, -1, 1);
     const buttonDown = (index: number): boolean => Boolean(pad.buttons[index]?.pressed);
@@ -148,6 +161,9 @@ export class InputController {
       firing: buttonDown(7),
       ability: buttonEdge(6),
       dash: buttonEdge(0),
+      bomb: buttonEdge(5),
+      weaponNext: buttonEdge(15),
+      weaponPrev: buttonEdge(14),
       pause: buttonEdge(9),
     };
     this.previousPadButtons = pad.buttons.map((button) => button.pressed);

@@ -1,5 +1,34 @@
-import type { BossId, BoonId, EnemyId, HeatId, MetaId, NodeKind, ShipId } from './types';
+import type { AsteroidId, BossId, BoonId, ElementId, EnemyId, HeatId, MetaId, NodeKind, ShipId, WeaponId } from './types';
 
+export interface WeaponDefinition {
+  id: WeaponId;
+  name: string;
+  element: ElementId;
+  color: string;
+  cadence: number;
+  damage: number;
+  speed: number;
+  range: number;
+  spread: number[];
+  description: string;
+}
+
+export interface ElementDefinition {
+  id: ElementId;
+  name: string;
+  color: string;
+  short: string;
+}
+
+export interface AsteroidDefinition {
+  id: AsteroidId;
+  name: string;
+  color: string;
+  radius: number;
+  hull: number;
+  weakTo: ElementId[];
+  reward: number;
+}
 export interface ShipDefinition {
   id: ShipId;
   name: string;
@@ -44,6 +73,7 @@ export interface EnemyDefinition {
   speed: number;
   damage: number;
   reward: number;
+  weakTo: ElementId[];
   description: string;
 }
 
@@ -76,6 +106,26 @@ export interface RouteDefinition {
   color: string;
 }
 
+export const ELEMENTS: readonly ElementDefinition[] = [
+  { id: 'kinetic', name: 'KINETIC', color: '#f2e9ff', short: 'RAW IMPACT' },
+  { id: 'plasma', name: 'PLASMA', color: '#ff8a5c', short: 'THERMAL BURN' },
+  { id: 'cryo', name: 'CRYO', color: '#70e7ff', short: 'FREEZE VECTOR' },
+  { id: 'void', name: 'VOID', color: '#bd9aff', short: 'NULL PRESSURE' },
+];
+
+export const WEAPONS: readonly WeaponDefinition[] = [
+  { id: 'pulse', name: 'PULSE CANNON', element: 'kinetic', color: '#f2e9ff', cadence: 0.13, damage: 14, speed: 1.1, range: 2.7, spread: [0], description: 'Reliable surface-skimming rounds.' },
+  { id: 'scatter', name: 'PLASMA SCATTER', element: 'plasma', color: '#ff8a5c', cadence: 0.34, damage: 9, speed: 0.92, range: 1.9, spread: [-0.2, -0.1, 0, 0.1, 0.2], description: 'Five hot shells that punish clustered targets.' },
+  { id: 'rail', name: 'CRYO RAIL', element: 'cryo', color: '#70e7ff', cadence: 0.52, damage: 48, speed: 1.55, range: 3.5, spread: [0], description: 'A long-range piercing lance with a freeze edge.' },
+  { id: 'nova', name: 'VOID NOVA', element: 'void', color: '#bd9aff', cadence: 0.72, damage: 82, speed: 0.78, range: 2.2, spread: [0], description: 'Slow singularity rounds that detonate on the globe.' },
+];
+
+export const ASTEROIDS: readonly AsteroidDefinition[] = [
+  { id: 'ferrite', name: 'FERRITE', color: '#ff9b4a', radius: 24, hull: 60, weakTo: ['kinetic'], reward: 40 },
+  { id: 'ice', name: 'ICEWORLD', color: '#70e7ff', radius: 28, hull: 76, weakTo: ['plasma'], reward: 55 },
+  { id: 'crystal', name: 'CRYSTAL', color: '#f0d36a', radius: 20, hull: 52, weakTo: ['cryo'], reward: 70 },
+  { id: 'voidstone', name: 'VOIDSTONE', color: '#bd9aff', radius: 30, hull: 98, weakTo: ['void'], reward: 90 },
+];
 export const SHIPS: readonly ShipDefinition[] = [
   {
     id: 'vanguard',
@@ -273,16 +323,16 @@ export const META: readonly MetaDefinition[] = [
 ];
 
 export const ENEMIES: readonly EnemyDefinition[] = [
-  { id: 'shardling', name: 'SHARDLING', color: '#ff8a5c', shape: 'diamond', radius: 15, hull: 24, speed: 74, damage: 12, reward: 2, description: 'A direct vector threat. Break its approach.' },
-  { id: 'swarmer', name: 'SWARMER', color: '#ffcd61', shape: 'orb', radius: 10, hull: 12, speed: 116, damage: 8, reward: 1, description: 'Fast, fragile, and dangerous in clusters.' },
-  { id: 'seeker', name: 'SEEKER', color: '#ff667d', shape: 'triangle', radius: 17, hull: 30, speed: 66, damage: 16, reward: 3, description: 'Steers toward your current position.' },
-  { id: 'mine', name: 'MINE', color: '#ff7d45', shape: 'mine', radius: 18, hull: 18, speed: 0, damage: 24, reward: 3, description: 'Stationary hazard with a wide contact radius.' },
-  { id: 'lancer', name: 'LANCER', color: '#ff5c5c', shape: 'hex', radius: 18, hull: 44, speed: 54, damage: 28, reward: 4, description: 'Red line telegraph precedes a committed charge.' },
-  { id: 'splitter', name: 'SPLITTER', color: '#ce72ff', shape: 'split', radius: 22, hull: 66, speed: 44, damage: 20, reward: 5, description: 'Divides into smaller threats when destroyed.' },
-  { id: 'prism', name: 'PRISM', color: '#70e7ff', shape: 'wedge', radius: 21, hull: 58, speed: 32, damage: 22, reward: 6, description: 'Reflects shots inside its visible wedge.' },
-  { id: 'harvester', name: 'HARVESTER', color: '#a6ff65', shape: 'harvest', radius: 23, hull: 78, speed: 38, damage: 18, reward: 8, description: 'Steals nearby Dust until destroyed.' },
-  { id: 'riftling', name: 'RIFTLING', color: '#bd9aff', shape: 'rift', radius: 16, hull: 48, speed: 56, damage: 18, reward: 7, description: 'Blinks between marked points.' },
-  { id: 'sentinel', name: 'SENTINEL', color: '#f2c7ff', shape: 'shield', radius: 25, hull: 110, speed: 24, damage: 30, reward: 10, description: 'Rotates a shield aperture that blocks frontal shots.' },
+  { id: 'shardling', name: 'SHARDLING', color: '#ff8a5c', shape: 'diamond', radius: 15, hull: 24, speed: 74, damage: 12, reward: 2, weakTo: ['kinetic'], description: 'A direct vector threat. Break its approach.' },
+  { id: 'swarmer', name: 'SWARMER', color: '#ffcd61', shape: 'orb', radius: 10, hull: 12, speed: 116, damage: 8, reward: 1, weakTo: ['plasma'], description: 'Fast, fragile, and dangerous in clusters.' },
+  { id: 'seeker', name: 'SEEKER', color: '#ff667d', shape: 'triangle', radius: 17, hull: 30, speed: 66, damage: 16, reward: 3, weakTo: ['cryo'], description: 'Steers toward your current position.' },
+  { id: 'mine', name: 'MINE', color: '#ff7d45', shape: 'mine', radius: 18, hull: 18, speed: 0, damage: 24, reward: 3, weakTo: ['void'], description: 'Stationary hazard with a wide contact radius.' },
+  { id: 'lancer', name: 'LANCER', color: '#ff5c5c', shape: 'hex', radius: 18, hull: 44, speed: 54, damage: 28, reward: 4, weakTo: ['cryo'], description: 'Red line telegraph precedes a committed charge.' },
+  { id: 'splitter', name: 'SPLITTER', color: '#ce72ff', shape: 'split', radius: 22, hull: 66, speed: 44, damage: 20, reward: 5, weakTo: ['plasma'], description: 'Divides into smaller threats when destroyed.' },
+  { id: 'prism', name: 'PRISM', color: '#70e7ff', shape: 'wedge', radius: 21, hull: 58, speed: 32, damage: 22, reward: 6, weakTo: ['void'], description: 'Reflects shots inside its visible wedge.' },
+  { id: 'harvester', name: 'HARVESTER', color: '#a6ff65', shape: 'harvest', radius: 23, hull: 78, speed: 38, damage: 18, reward: 8, weakTo: ['kinetic'], description: 'Steals nearby Dust until destroyed.' },
+  { id: 'riftling', name: 'RIFTLING', color: '#bd9aff', shape: 'rift', radius: 16, hull: 48, speed: 56, damage: 18, reward: 7, weakTo: ['plasma'], description: 'Blinks between marked points.' },
+  { id: 'sentinel', name: 'SENTINEL', color: '#f2c7ff', shape: 'shield', radius: 25, hull: 110, speed: 24, damage: 30, reward: 10, weakTo: ['cryo'], description: 'Rotates a shield aperture that blocks frontal shots.' },
 ];
 
 export const BOSSES: readonly BossDefinition[] = [
@@ -317,6 +367,17 @@ export const HEATS: readonly { id: HeatId; name: string; effect: string; payout:
   { id: 'fractured', name: 'FRACTURED', effect: 'BOSSES GAIN A PATTERN', payout: 0.3 },
 ];
 
+export function getWeapon(id: WeaponId): WeaponDefinition {
+  return WEAPONS.find((weapon) => weapon.id === id) ?? WEAPONS[0];
+}
+
+export function getElement(id: ElementId): ElementDefinition {
+  return ELEMENTS.find((element) => element.id === id) ?? ELEMENTS[0];
+}
+
+export function getAsteroid(id: AsteroidId): AsteroidDefinition {
+  return ASTEROIDS.find((asteroid) => asteroid.id === id) ?? ASTEROIDS[0];
+}
 export const TRANSMISSIONS: readonly { id: string; title: string; body: string; condition: string }[] = [
   { id: 'transmission-1', title: 'STATIC / 01', body: 'The ring remembers every impact. It keeps the shape of the pilot who survives them.', condition: 'DEFEAT GRINDER' },
   { id: 'transmission-2', title: 'STATIC / 02', body: 'Rails do not point toward safety. They point toward whatever you refuse to abandon.', condition: 'DEFEAT RAIL WARDEN' },

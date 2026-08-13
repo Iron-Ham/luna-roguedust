@@ -18,7 +18,7 @@ export type Screen =
   | 'threat'
   | 'game';
 
-export type RunPhase = 'idle' | 'route' | 'combat' | 'boss' | 'boon' | 'salvage' | 'market' | 'dead' | 'victory' | 'paused';
+export type RunPhase = 'idle' | 'route' | 'combat' | 'boss' | 'reward' | 'boon' | 'salvage' | 'market' | 'dead' | 'victory' | 'paused';
 export type ShipId = 'vanguard' | 'bulwark' | 'needle' | 'mirage' | 'nova';
 export type EnemyId =
   | 'shardling'
@@ -34,6 +34,10 @@ export type EnemyId =
 export type BossId = 'grinder' | 'rail-warden' | 'bloom-mother' | 'prism-leviathan' | 'null-crown';
 export type NodeKind = 'sweep' | 'salvage' | 'elite' | 'rift' | 'market';
 export type SalvageChoice = 'patch' | 'cache' | 'charge';
+export type WeaponId = 'pulse' | 'scatter' | 'rail' | 'nova';
+export type ElementId = 'kinetic' | 'plasma' | 'cryo' | 'void';
+export type AsteroidId = 'ferrite' | 'ice' | 'crystal' | 'voidstone';
+export type RunMode = 'campaign' | 'endless';
 export type BoonId =
   | 'overclock'
   | 'echo-chamber'
@@ -46,7 +50,7 @@ export type BoonId =
 export type MetaId = 'hull-matrix' | 'vector-coils' | 'capacitor-bank' | 'salvage-lens' | 'phase-lattice' | 'resonance-core';
 export type HeatId = 'overclocked' | 'crowded' | 'short-fuse' | 'scarcity' | 'fractured';
 export type Quality = 'high' | 'balanced' | 'low';
-export type AudioMode = 'sector' | 'boss' | 'quiet';
+export type AudioMode = 'sector' | 'boss' | 'endless' | 'quiet';
 export type RunEndReason = 'destroyed' | 'victory' | 'abandoned';
 export type Direction = 'up' | 'down' | 'left' | 'right';
 
@@ -78,9 +82,11 @@ export interface RunSummary {
   dust: number;
   sector: number;
   kills: number;
+  score: number;
   boons: BoonId[];
   ship: ShipId;
   boss?: BossId;
+  mode: RunMode;
   newlyUnlocked: string[];
 }
 
@@ -95,8 +101,11 @@ export interface SaveData {
   transmissions: string[];
   feats: string[];
   totalKills: number;
+  bestScore: number;
+  scoreMilestones: number[];
   highestSector: number;
   threatUnlocked: boolean;
+  endlessUnlocked: boolean;
   threatModifiers: HeatId[];
   settings: SettingsData;
   lastRun: RunSummary | null;
@@ -113,6 +122,9 @@ export interface InputSnapshot {
   firing: boolean;
   abilityPressed: boolean;
   dashPressed: boolean;
+  bombPressed: boolean;
+  weaponNextPressed: boolean;
+  weaponPrevPressed: boolean;
   pausePressed: boolean;
   pointerActive: boolean;
 }
@@ -120,6 +132,8 @@ export interface InputSnapshot {
 export interface PlayerState {
   position: Vec2;
   velocity: Vec2;
+  longitude?: number;
+  latitude?: number;
   aim: number;
   hull: number;
   maxHull: number;
@@ -135,12 +149,20 @@ export interface PlayerState {
   decoy: number;
   charging: number;
   lastDashAngle: number;
+  weapon?: WeaponId;
+  bombs?: number;
+  shieldCharges?: number;
+  lives?: number;
+  score?: number;
+  multiplier?: number;
+  multiplierTimer?: number;
 }
 
 export interface RenderEnemy {
   id: EnemyId;
   x: number;
   y: number;
+  depth: number;
   radius: number;
   hull: number;
   maxHull: number;
@@ -148,25 +170,31 @@ export interface RenderEnemy {
   telegraph: number;
   elite: boolean;
   flash: number;
+  element: ElementId;
+  weakTo: ElementId[];
 }
-
 export interface RenderProjectile {
   x: number;
   y: number;
+  depth: number;
   vx: number;
   vy: number;
   friendly: boolean;
   radius: number;
   life: number;
   color: string;
+  element: ElementId;
+  arc: number;
 }
 
 export interface RenderPickup {
   x: number;
   y: number;
+  depth: number;
   amount: number;
-  kind: 'dust' | 'energy' | 'heal';
+  kind: 'dust' | 'energy' | 'heal' | 'bomb' | 'shield' | 'life' | 'score';
   life: number;
+  label?: string;
 }
 
 export interface RenderParticle {
@@ -184,6 +212,7 @@ export interface RenderBoss {
   id: BossId;
   x: number;
   y: number;
+  depth: number;
   radius: number;
   hull: number;
   maxHull: number;
@@ -193,24 +222,66 @@ export interface RenderBoss {
   name: string;
 }
 
+export interface RenderAsteroid {
+  id: AsteroidId;
+  x: number;
+  y: number;
+  depth: number;
+  radius: number;
+  hull: number;
+  maxHull: number;
+  element: ElementId;
+  weakTo: ElementId[];
+  angle: number;
+  color: string;
+}
+
+export interface RenderReward {
+  x: number;
+  y: number;
+  depth: number;
+  health: number;
+  maxHealth: number;
+  label: string;
+  color: string;
+}
+
+export interface RenderCargo {
+  x: number;
+  y: number;
+  depth: number;
+  health: number;
+  maxHealth: number;
+  label: string;
+  reward: 'bomb' | 'shield' | 'life';
+}
+
 export interface RenderState {
   phase: RunPhase;
+  mode: RunMode;
   ship: ShipId;
   sector: number;
+  levelName: string;
   sectorName: string;
   nodeIndex: number;
   nodeTotal: number;
   runDust: number;
   heat: number;
   score: number;
+  multiplier: number;
+  levelProgress: number;
   elapsed: number;
   player: PlayerState;
   boons: BoonId[];
   enemies: RenderEnemy[];
+  asteroids: RenderAsteroid[];
   projectiles: RenderProjectile[];
   pickups: RenderPickup[];
   particles: RenderParticle[];
   boss: RenderBoss | null;
+  reward: RenderReward | null;
+  cargo: RenderCargo | null;
+  bombPulse: number;
   status: string;
   activeRoute: NodeKind | null;
   routeChoices: NodeKind[];
@@ -220,11 +291,18 @@ export interface RenderState {
 }
 
 export type GameEvent =
-  | { type: 'shot'; intensity: number }
+  | { type: 'shot'; intensity: number; weapon: WeaponId; element: ElementId }
+  | { type: 'weaponSwap'; weapon: WeaponId; element: ElementId }
   | { type: 'dash'; intensity: number }
   | { type: 'ability'; intensity: number }
+  | { type: 'bomb'; intensity: number }
   | { type: 'hit'; intensity: number }
   | { type: 'pickup'; intensity: number }
+  | { type: 'elementHit'; element: ElementId; multiplier: number }
+  | { type: 'scoreMilestone'; score: number; reward: number }
+  | { type: 'cargoEvent'; reward: 'bomb' | 'shield' | 'life' }
+  | { type: 'rewardReady'; label: string }
+  | { type: 'levelStart'; level: number; name: string }
   | { type: 'enemyDefeated'; enemy: EnemyId; x: number; y: number; dust: number }
   | { type: 'bossPhase'; boss: BossId; phase: number }
   | { type: 'bossDefeated'; boss: BossId; reward: number }
@@ -235,7 +313,6 @@ export type GameEvent =
   | { type: 'marketReady'; choices: BoonId[] }
   | { type: 'runEnded'; summary: RunSummary }
   | { type: 'message'; text: string };
-
 export interface GameCallbacks {
   onEvent: (event: GameEvent) => void;
 }
@@ -244,6 +321,7 @@ export interface LaunchOptions {
   ship: ShipId;
   heat: HeatId[];
   seed: number;
+  mode: RunMode;
 }
 
 export interface GameIntent {
@@ -272,6 +350,7 @@ export interface GameIntent {
   heat?: HeatId;
   key?: keyof SettingsData;
   value?: boolean | number | Quality;
+  mode?: RunMode;
 }
 
 export interface GameView {

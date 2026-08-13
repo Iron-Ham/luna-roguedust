@@ -59,7 +59,7 @@ requestAnimationFrame(frame);
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
-    if (simulation.getPhase() === 'combat' || simulation.getPhase() === 'boss') {
+    if (simulation.getPhase() === 'combat' || simulation.getPhase() === 'boss' || simulation.getPhase() === 'reward') {
       simulation.pause();
       hiddenPaused = true;
     }
@@ -80,11 +80,19 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', persistNow);
 
 function handleEvent(event: GameEvent): void {
-  if (event.type === 'shot') audio.playSfx('shot', event.intensity);
+  if (event.type === 'shot') audio.playSfx('shot', event.intensity, event.element === 'plasma' ? 90 : event.element === 'cryo' ? 180 : event.element === 'void' ? -55 : 0);
   if (event.type === 'dash') audio.playSfx('dash', event.intensity);
   if (event.type === 'ability') audio.playSfx('ability', event.intensity);
   if (event.type === 'hit') audio.playSfx('hit', event.intensity);
   if (event.type === 'pickup') audio.playSfx('pickup', event.intensity);
+  if (event.type === 'scoreMilestone') {
+    save.dust += event.reward;
+    persistSoon();
+  }
+  if (event.type === 'weaponSwap') audio.playSfx('ui', 0.8);
+  if (event.type === 'elementHit') audio.playSfx('pickup', event.multiplier);
+  if (event.type === 'cargoEvent') audio.playSfx('pickup', 0.9);
+  if (event.type === 'rewardReady') audio.playSfx('pickup', 1.2);
   if (event.type === 'bossPhase') {
     audio.playSfx('bossPhase', 1);
     audio.setMusicMode('boss');
@@ -120,7 +128,9 @@ function handleEvent(event: GameEvent): void {
   if (event.type === 'runEnded') {
     save.dust += event.summary.dust;
     save.totalKills += event.summary.kills;
+    save.bestScore = Math.max(save.bestScore, event.summary.score);
     save.highestSector = Math.max(save.highestSector, event.summary.sector);
+    if (event.summary.mode === 'endless') save.endlessUnlocked = true;
     save.lastRun = event.summary;
     persistNow();
     audio.playSfx(event.summary.reason === 'victory' ? 'victory' : 'death', 1);
@@ -133,7 +143,7 @@ function handleEvent(event: GameEvent): void {
     if (phase === 'paused') {
       ui.setScreen('pause');
       input.setActive(false);
-    } else if (phase === 'combat' || phase === 'boss') {
+    } else if (phase === 'combat' || phase === 'boss' || phase === 'reward') {
       ui.setScreen('game');
       input.setActive(true);
     }
